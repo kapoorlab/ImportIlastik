@@ -6,26 +6,42 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.ScrollPane;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
 
+import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
+import ij.io.Opener;
 import ij.plugin.PlugIn;
+import io.scif.img.ImgIOException;
+import io.scif.img.ImgOpener;
+import mpicbg.imglib.image.ImagePlusAdapter;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 public class InteractiveImporter implements PlugIn {
 
 	public final File[] file;
 	public final File[] roifile;
-
-	
+    public ImagePlus imp;
+	public RandomAccessibleInterval<FloatType> CurrentView;
 	public InteractiveImporter(final File[] file, final File[] roifile) {
 		
 		this.file = file;
@@ -36,9 +52,53 @@ public class InteractiveImporter implements PlugIn {
 	
 	@Override
 	public void run(String arg0) {
-		// TODO Auto-generated method stub
+		
+		
+		Card();
 		
 	}
+	public static enum ValueChange {
+		
+		DISPLAYIMAGE, DISPLAYROI;
+		
+	}
+	
+	public void updatePreview(final ValueChange change) {
+		
+		if (change == ValueChange.DISPLAYIMAGE) {
+			
+			if (imp == null){
+				imp = ImageJFunctions.show(CurrentView);
+			
+			}
+			
+			else {
+			
+				final float[] pixels = (float[]) imp.getProcessor().getPixels();
+				final Cursor<FloatType> c = Views.iterable(CurrentView).cursor();
+
+				for (int i = 0; i < pixels.length; ++i)
+					pixels[i] = (float) c.next().get();
+
+				imp.updateAndDraw();
+
+			}
+
+			imp.setTitle("Active image" + " " + "Index : " + rowfile);
+			
+		}
+		
+		if (change == ValueChange.DISPLAYROI) {
+			
+			
+			
+			
+		}
+		
+		
+		
+	}
+	
 	public JFrame Cardframe = new JFrame("Labelled DataSet Generator");
 	public JPanel panelFirst = new JPanel();
 	public JPanel panelCont = new JPanel();
@@ -57,6 +117,14 @@ public class InteractiveImporter implements PlugIn {
 	public Border selectroiset = new CompoundBorder(new TitledBorder("Select RoiSet"), new EmptyBorder(c.insets));
 	int rowfile = 0;
 	int rowroiset = 0;
+	DefaultTableModel tableModel = new DefaultTableModel() {
+
+	    @Override
+	    public boolean isCellEditable(int row, int column) {
+	       //all cells false
+	       return false;
+	    }
+	};
 	public void Card() {
 		
 		CardLayout cl = new CardLayout();
@@ -66,6 +134,8 @@ public class InteractiveImporter implements PlugIn {
 
 		panelCont.add(panelFirst, "1");
 		panelFirst.setLayout(layout);
+		PanelSelectFile.setLayout(layout);
+		PanelSelectRoi.setLayout(layout);
 		c.anchor = GridBagConstraints.BOTH;
 		c.ipadx = 35;
 
@@ -88,29 +158,26 @@ public class InteractiveImporter implements PlugIn {
 		
 		tablefile.setFillsViewportHeight(true);
 		
-		tablefile.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tablefile.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-		tablefile.setMinimumSize(new Dimension(800, 500));
 
+		int width = 500;
 		scrollPanefile = new JScrollPane(tablefile);
-		scrollPanefile.setMinimumSize(new Dimension(800, 500));
 
 		scrollPanefile.getViewport().add(tablefile);
 		scrollPanefile.setAutoscrolls(true);
-		
+		scrollPanefile.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		tableroisets.setFillsViewportHeight(true);
 		
-		tableroisets.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tableroisets.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-		tableroisets.setMinimumSize(new Dimension(800, 500));
 		
 	
 		scrollPaneroisets = new JScrollPane(tableroisets);
-		scrollPaneroisets.setMinimumSize(new Dimension(800, 500));
 
 		scrollPaneroisets.getViewport().add(tableroisets);
 		scrollPaneroisets.setAutoscrolls(true);
-		
+		scrollPaneroisets.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		
 
 		for(File currentfile: file ) {
@@ -118,7 +185,6 @@ public class InteractiveImporter implements PlugIn {
 			tablefile.getModel().setValueAt(currentfile.getName(), rowfile, 0);
 			rowfile++;
 			tablesizefile = rowfile;
-			
 		}
 		
 		for (File currentroifile: roifile ) {
@@ -128,25 +194,71 @@ public class InteractiveImporter implements PlugIn {
 			tablesizeroi = rowroiset;
 		}
 		
-		PanelSelectFile.add(scrollPanefile, BorderLayout.CENTER);
-		PanelSelectRoi.add(scrollPaneroisets, BorderLayout.CENTER);
+		
+		if(file!=null){ 
+			tablefile.addMouseListener(new MouseAdapter() {
+				  public void mouseClicked(MouseEvent e) {
+				 
+					  if(e.getClickCount() == 1) {
+				      JTable target = (JTable)e.getSource();
+				      rowfile = target.getSelectedRow();
+				      // do some action if appropriate column
+				      if (rowfile > 0)
+				      displayclickedfile(rowfile);
+				      else
+				    	  displayclickedfile(0);	  
+					  }
+				  }
+				});
+			}
+		
+		
+		
+		tablefile.getColumnModel().getColumn(0).setPreferredWidth(width);
+		tablefile.getColumnModel().getColumn(0).setResizable(true);
+		
+		tableroisets.getColumnModel().getColumn(0).setPreferredWidth(width);
+		tableroisets.getColumnModel().getColumn(0).setResizable(true);
+		
+		
+		PanelSelectFile.add(scrollPanefile, new GridBagConstraints(0,0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		PanelSelectRoi.add(scrollPaneroisets, new GridBagConstraints(0,0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
 		
-		panelFirst.add(PanelSelectFile, new GridBagConstraints(0,0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+		panelFirst.add(PanelSelectFile, new GridBagConstraints(0 , 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-		panelFirst.add(PanelSelectRoi, new GridBagConstraints(0,3, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+		panelFirst.add(PanelSelectRoi, new GridBagConstraints(3 , 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		
 		
 		Cardframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		cl.show(panelCont, "1");
-
+		tablefile.validate();
+		tableroisets.validate();
+		scrollPanefile.validate();
+		scrollPaneroisets.validate();
 		Cardframe.add(panelCont, "Center");
 		panelFirst.setVisible(true);
 		Cardframe.pack();
 		Cardframe.setVisible(true);
+		
+		
+	}
+	
+	public void displayclickedfile(final int trackindex) { 
+		try {
+			
+			CurrentView = new ImgOpener().openImgs( file[rowfile].getPath(), new FloatType()).iterator().next();
+		} catch (ImgIOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		updatePreview(ValueChange.DISPLAYIMAGE);
 		
 	}
 	
