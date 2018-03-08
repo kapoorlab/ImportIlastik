@@ -31,7 +31,6 @@ public class ResaveSetListener implements ActionListener {
 		
 	String path = parent.roifile[parent.rowroiset].getPath();	
 	
-	System.out.println(path);
 	
 	
      RoiManager roim = 	RoiManager.getInstance();

@@ -32,6 +32,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
+import listeners.IlastikImageCreatorListener;
 import listeners.ResaveSetListener;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import net.imglib2.Cursor;
@@ -155,6 +156,7 @@ public class InteractiveImporter implements PlugIn {
 	public Border selectfile = new CompoundBorder(new TitledBorder("Select File"), new EmptyBorder(c.insets));
 	public Border selectroiset = new CompoundBorder(new TitledBorder("Select RoiSet"), new EmptyBorder(c.insets));
 	public Border createset = new CompoundBorder(new TitledBorder("Create Labelled DataSet"), new EmptyBorder(c.insets));
+	
 	public int rowfile = 0;
 	public int rowroiset = 0;
 	DefaultTableModel tableModel = new DefaultTableModel() {
@@ -167,6 +169,8 @@ public class InteractiveImporter implements PlugIn {
 	};
 
 	public JButton Resave = new JButton("Resave RoiSet");
+	public JButton CreateBlank = new JButton("Create Ilastik Label import image");
+	
 	public void Card() {
 
 		CardLayout cl = new CardLayout();
@@ -275,6 +279,8 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		PanelGen.add(Resave,  new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		PanelGen.add(CreateBlank,  new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
@@ -286,7 +292,8 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		panelFirst.add(PanelGen, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-
+		
+		CreateBlank.addActionListener(new IlastikImageCreatorListener(this));
 		
 		Resave.addActionListener(new ResaveSetListener(this));
 		Cardframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
