@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -31,6 +32,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
+import listeners.ResaveSetListener;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
@@ -121,7 +123,6 @@ public class InteractiveImporter implements PlugIn {
 
 			IJ.open(roifile[rowroiset].getPath());
 
-			System.out.println(roifile[rowroiset].getPath());
 			Roi[] allrois = roimanager.getRoisAsArray();
 
 			for (int i = 0; i < allrois.length; ++i) {
@@ -141,6 +142,7 @@ public class InteractiveImporter implements PlugIn {
 	public JPanel panelCont = new JPanel();
 	public JPanel PanelSelectFile = new JPanel();
 	public JPanel PanelSelectRoi = new JPanel();
+	public JPanel PanelGen = new JPanel();
 	public final Insets insets = new Insets(10, 0, 0, 0);
 	public final GridBagLayout layout = new GridBagLayout();
 	public final GridBagConstraints c = new GridBagConstraints();
@@ -152,8 +154,9 @@ public class InteractiveImporter implements PlugIn {
 	public JScrollPane scrollPaneroisets;
 	public Border selectfile = new CompoundBorder(new TitledBorder("Select File"), new EmptyBorder(c.insets));
 	public Border selectroiset = new CompoundBorder(new TitledBorder("Select RoiSet"), new EmptyBorder(c.insets));
-	int rowfile = 0;
-	int rowroiset = 0;
+	public Border createset = new CompoundBorder(new TitledBorder("Create Labelled DataSet"), new EmptyBorder(c.insets));
+	public int rowfile = 0;
+	public int rowroiset = 0;
 	DefaultTableModel tableModel = new DefaultTableModel() {
 
 		@Override
@@ -163,6 +166,7 @@ public class InteractiveImporter implements PlugIn {
 		}
 	};
 
+	public JButton Resave = new JButton("Resave RoiSet");
 	public void Card() {
 
 		CardLayout cl = new CardLayout();
@@ -174,6 +178,7 @@ public class InteractiveImporter implements PlugIn {
 		panelFirst.setLayout(layout);
 		PanelSelectFile.setLayout(layout);
 		PanelSelectRoi.setLayout(layout);
+		PanelGen.setLayout(layout);
 		c.anchor = GridBagConstraints.BOTH;
 		c.ipadx = 35;
 
@@ -268,15 +273,22 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		PanelSelectRoi.add(scrollPaneroisets, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		PanelGen.add(Resave,  new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
+		PanelGen.setBorder(createset);
 
 		panelFirst.add(PanelSelectFile, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		panelFirst.add(PanelSelectRoi, new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		panelFirst.add(PanelGen, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
+		
+		Resave.addActionListener(new ResaveSetListener(this));
 		Cardframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		cl.show(panelCont, "1");
 		tablefile.validate();
