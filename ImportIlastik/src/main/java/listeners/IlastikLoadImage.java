@@ -24,6 +24,9 @@ public class IlastikLoadImage implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 
 		parent.chooserA = new JFileChooser();
+		if(parent.chooserB!=null)
+			parent.chooserA.setCurrentDirectory(parent.chooserB.getCurrentDirectory());
+		else
 		parent.chooserA.setCurrentDirectory(new java.io.File("."));
 		parent.chooserA.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		//

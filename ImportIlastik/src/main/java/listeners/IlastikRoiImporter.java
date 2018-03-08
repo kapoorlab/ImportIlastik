@@ -24,6 +24,9 @@ public class IlastikRoiImporter implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 
 		parent.chooserB = new JFileChooser();
+		if(parent.chooserA!=null)
+			parent.chooserB.setCurrentDirectory(parent.chooserA.getCurrentDirectory());
+		else
 		parent.chooserB.setCurrentDirectory(new java.io.File("."));
 		parent.chooserB.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		//
