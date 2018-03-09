@@ -31,6 +31,9 @@ public class IlastikRoiImporter implements ActionListener {
 		parent.chooserB.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		//
 
+		 FileNameExtensionFilter filter = new FileNameExtensionFilter("Zip Files", "zip");
+			parent.chooserB.setFileFilter(filter);
+			
 		parent.chooserB.setAcceptAllFileFilterUsed(false);
 		
 		

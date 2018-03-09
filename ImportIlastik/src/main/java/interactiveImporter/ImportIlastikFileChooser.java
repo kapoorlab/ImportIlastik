@@ -7,6 +7,8 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Label;
+import java.awt.TextField;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -43,12 +45,15 @@ public class ImportIlastikFileChooser extends JPanel {
 	  public static final Insets insets = new Insets(10, 0, 0, 0);
 	  public final GridBagLayout layout = new GridBagLayout();
 	  public final GridBagConstraints c = new GridBagConstraints();
+	
 	  public Border selectfile = new CompoundBorder(new TitledBorder("Select file"), new EmptyBorder(c.insets));
 	  
 	  public ImportIlastikFileChooser() {
 		  
 		  panelFirst.setLayout(layout);
 		  CardLayout cl = new CardLayout();
+		
+			
 			
 			panelCont.setLayout(cl);
 			panelCont.add(panelFirst, "1");

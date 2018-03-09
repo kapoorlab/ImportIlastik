@@ -30,7 +30,9 @@ public class IlastikLoadImage implements ActionListener {
 		parent.chooserA.setCurrentDirectory(new java.io.File("."));
 		parent.chooserA.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		//
-
+		 FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files", "tif", "tiff","nd2", "...");
+		parent.chooserA.setFileFilter(filter);
+				
 		parent.chooserA.setAcceptAllFileFilterUsed(false);
 		
 		//

@@ -2,14 +2,21 @@ package interactiveImporter;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Label;
 import java.awt.ScrollPane;
+import java.awt.TextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -21,6 +28,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import ij.IJ;
@@ -47,7 +55,10 @@ public class InteractiveImporter implements PlugIn {
 	public final File[] roifile;
 	public ImagePlus imp;
 	public RoiManager roimanager;
+	public String ClassLabel;
 	public RandomAccessibleInterval<FloatType> CurrentView;
+	public HashMap<Integer, Boolean> Imagemap;
+	public HashMap<Integer, Boolean> Roimap;
 
 	public InteractiveImporter(final File[] file, final File[] roifile) {
 
@@ -58,6 +69,9 @@ public class InteractiveImporter implements PlugIn {
 	@Override
 	public void run(String arg0) {
 
+		ClassLabel = "Label A";
+		Imagemap = new HashMap<Integer, Boolean>();
+		Roimap = new HashMap<Integer, Boolean>();
 		Card();
 
 	}
@@ -166,13 +180,21 @@ public class InteractiveImporter implements PlugIn {
 			// all cells false
 			return false;
 		}
+	
 	};
 
+	
 	public JButton Resave = new JButton("Resave RoiSet");
 	public JButton CreateBlank = new JButton("Create Ilastik Label import image");
-	
+	  public TextField LabelTextField;
+	  public Label LabelArea;
 	public void Card() {
-
+		LabelArea = new Label("Enter Class Label");
+		
+		
+		LabelTextField = new TextField();
+		LabelTextField = new TextField(5);
+		LabelTextField.setText(ClassLabel);
 		CardLayout cl = new CardLayout();
 
 		c.insets = new Insets(5, 5, 5, 5);
@@ -190,11 +212,11 @@ public class InteractiveImporter implements PlugIn {
 		c.gridheight = 10;
 		c.gridy = 1;
 		c.gridx = 0;
-		Object[] colnamesfile = new Object[] { "Filename" };
+		Object[] colnamesfile = new Object[] { "Filename", "Done" };
 
 		Object[][] rowvaluesfile = new Object[file.length][colnamesfile.length];
 
-		Object[] colnamesroisets = new Object[] { "Roisets" };
+		Object[] colnamesroisets = new Object[] { "Roisets", "Done" };
 
 		Object[][] rowvaluesroisets = new Object[roifile.length][colnamesroisets.length];
 
@@ -224,6 +246,7 @@ public class InteractiveImporter implements PlugIn {
 		for (File currentfile : file) {
 
 			tablefile.getModel().setValueAt(currentfile.getName(), rowfile, 0);
+			tablefile.getModel().setValueAt(false, rowfile, 1);
 			rowfile++;
 			tablesizefile = rowfile;
 		}
@@ -231,6 +254,7 @@ public class InteractiveImporter implements PlugIn {
 		for (File currentroifile : roifile) {
 
 			tableroisets.getModel().setValueAt(currentroifile.getName(), rowroiset, 0);
+			tableroisets.getModel().setValueAt(false, rowroiset, 1);
 			rowroiset++;
 			tablesizeroi = rowroiset;
 		}
@@ -277,10 +301,18 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		PanelSelectRoi.add(scrollPaneroisets, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-		PanelGen.add(Resave,  new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+		PanelGen.add(LabelArea, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-		PanelGen.add(CreateBlank,  new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+
+		PanelGen.add(LabelTextField, new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		
+		PanelGen.add(Resave,  new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		PanelGen.add(CreateBlank,  new GridBagConstraints(3, 2, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		
+		
 
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
@@ -309,6 +341,9 @@ public class InteractiveImporter implements PlugIn {
 
 	}
 
+	
+	
+	
 	public void displayclickedfile(final int trackindex) {
 
 		updatePreview(ValueChange.DISPLAYIMAGE);
