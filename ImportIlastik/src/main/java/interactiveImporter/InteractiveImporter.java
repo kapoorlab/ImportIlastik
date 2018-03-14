@@ -15,6 +15,7 @@ import java.awt.TextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -51,9 +52,12 @@ import listeners.ResaveSetListener;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import utils.StringImage;
 
 public class InteractiveImporter implements PlugIn {
 
@@ -66,6 +70,8 @@ public class InteractiveImporter implements PlugIn {
 	public RandomAccessibleInterval<FloatType> TotalView;
 	public HashMap<Integer, Boolean> Imagemap;
 	public HashMap<Integer, Boolean> Roimap;
+	public HashMap<String, ArrayList<StringImage>> HighDImageMap;
+	public ArrayList<StringImage> mydimID;
 	public int thirdDimension;
 	public int fourthDimension;
 	public int thirdDimensionSize;
@@ -104,8 +110,10 @@ public class InteractiveImporter implements PlugIn {
 		
 	
 		
-		ClassLabel = "Label A";
+		ClassLabel = "LabelA";
 		Imagemap = new HashMap<Integer, Boolean>();
+		HighDImageMap = new HashMap<String, ArrayList<StringImage>>();
+		mydimID = new ArrayList<StringImage>();
 		Roimap = new HashMap<Integer, Boolean>();
 		Card();
 
@@ -123,6 +131,9 @@ public class InteractiveImporter implements PlugIn {
 			
 		
 		if (change == ValueChange.DISPLAYIMAGE) {
+			mydimID = new ArrayList<StringImage>();
+			
+			
 			try {
 
 				TotalView = new ImgOpener().openImgs(file[rowfile].getPath(), new FloatType()).iterator().next();
@@ -133,6 +144,7 @@ public class InteractiveImporter implements PlugIn {
 
 			if(ndims < 3) {
 				
+				CurrentView = TotalView;
 				panelFirst.remove(PanelZ);
 				panelFirst.remove(PanelT);
 				panelFirst.repaint();
