@@ -116,22 +116,83 @@ public class IlastikImageCreatorListener implements ActionListener {
 				}
 			} 
 				
-			
-			
-
 			ImgSaver saver = new ImgSaver();
-			String imgName = parent.file[parent.rowfile].getParentFile().getAbsolutePath() + parent.ClassLabel + ".tif";
+			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
 			try {
 				saver.saveImg(imgName, BigCurrentEmpty);
 			} catch (Exception exc) {
 				exc.printStackTrace();
 			}
-			ImageJFunctions.show(BigCurrentEmpty);
+			
+			
+
+		
+		}
+		
+		
+		if (parent.TotalView.numDimensions() == 4) {
+
+			Img<UnsignedShortType> BigCurrentEmpty = new ArrayImgFactory<UnsignedShortType>().create(parent.TotalView,
+					new UnsignedShortType());
+          RandomAccessibleInterval<UnsignedShortType> pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
+			
+			
+			IntervalView<UnsignedShortType> slice = Views.hyperSlice(pretotalimg, 2, parent.fourthDimension - 1);
+			
+			String uniqueID = Integer.toString(parent.rowfile);
+			String dimID = Integer.toString(parent.thirdDimension);
+			String fourdimID = Integer.toString(parent.fourthDimension);
+			
+			
+			processSlice(CurrentEmpty, slice);
+			
+			StringImage 	str = new StringImage(dimID, fourdimID, slice);
+			parent.mydimID.add(str);
+			parent.HighDImageMap.put(uniqueID, parent.mydimID);
+			
+			
+			if (parent.HighDImageMap.size() > 0) {
+				for (Map.Entry<String, ArrayList<StringImage>> entry : parent.HighDImageMap.entrySet()) {
+
+					String ID = entry.getKey();
+					if (ID.equals(uniqueID)) {
+ 
+						ArrayList<StringImage> list = parent.HighDImageMap.get(ID);
+						
+						for (int i = 0;  i < list.size(); ++i) {
+						
+						int thirdDim = Integer.parseInt(list.get(i).ID) ;
+						int fourthDim = Integer.parseInt(list.get(i).IDSec);
+						
+						pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2,
+								thirdDim - 1);
+						slice = Views.hyperSlice(pretotalimg, 2, fourthDim - 1);
+						
+						processSlice(list.get(i).image, slice);
+					
+						
+						}
+
+					}
+
+				}
+			} 
+				
+			ImgSaver saver = new ImgSaver();
+			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
+			try {
+				saver.saveImg(imgName, BigCurrentEmpty);
+			} catch (Exception exc) {
+				exc.printStackTrace();
+			}
+			
+
+		
 		}
 
-		if (parent.TotalView.numDimensions() < 3) {
+		if(parent.TotalView.numDimensions() < 3) {
 			ImgSaver saver = new ImgSaver();
-			String imgName = parent.file[parent.rowfile].getParentFile().getAbsolutePath() + parent.ClassLabel + ".tif";
+			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
 			try {
 				saver.saveImg(imgName, CurrentEmpty);
 			} catch (Exception exc) {
