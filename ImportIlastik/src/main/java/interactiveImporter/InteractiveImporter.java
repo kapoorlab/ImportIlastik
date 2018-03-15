@@ -85,6 +85,7 @@ public class InteractiveImporter implements PlugIn {
 	public int fourthDimensionsliderInit = 1;
 	public final int scrollbarSize = 1000;
 	public int ndims = 2;
+
 	public InteractiveImporter(final File[] file, final File[] roifile) {
 
 		this.file = file;
@@ -98,10 +99,8 @@ public class InteractiveImporter implements PlugIn {
 		fourthDimension = 1;
 	}
 
-
-
 	public void setZ(final int value) {
-		
+
 		thirdDimensionslider = value;
 		thirdDimensionsliderInit = 1;
 		thirdDimension = 1;
@@ -109,10 +108,7 @@ public class InteractiveImporter implements PlugIn {
 
 	@Override
 	public void run(String arg0) {
-		
-		
-	
-		
+
 		ClassLabel = "LabelA";
 		Imagemap = new HashMap<Integer, Boolean>();
 		HighDImageMap = new HashMap<String, ArrayList<StringImage>>();
@@ -130,143 +126,114 @@ public class InteractiveImporter implements PlugIn {
 
 	public void updatePreview(final ValueChange change) {
 
-		
-			
-		
 		if (change == ValueChange.DISPLAYIMAGE) {
-			
-		
-			
+
 			mydimID = new ArrayList<StringImage>();
-			
-			
+
 			try {
 
 				TotalView = new ImgOpener().openImgs(file[rowfile].getPath(), new FloatType()).iterator().next();
 			} catch (ImgIOException e) {
-				
+
 				e.printStackTrace();
 			}
 			ndims = TotalView.numDimensions();
 			ImageJFunctions.show(TotalView);
-			
-			if(ndims < 3) {
-				
+
+			if (ndims < 3) {
+
 				fourthDimensionSize = 0;
 				thirdDimensionSize = 0;
 				panelFirst.remove(PanelZ);
 				panelFirst.repaint();
 				panelFirst.validate();
-				
+
 			}
-			
+
 			if (ndims == 3) {
 
-		
-				
 				PanelZ.remove(zslider);
 				PanelZ.remove(ztimeslider);
 				PanelZ.remove(timeslider);
-				
-				
-				zslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0,
-						10 + scrollbarSize);
-				
-				
+
+				zslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0, 10 + scrollbarSize);
+
 				fourthDimension = 1;
 				thirdDimension = 1;
 				fourthDimensionSize = 0;
 
 				thirdDimensionSize = (int) TotalView.dimension(2);
-			
-			
+
 				PanelZ.add(zgenText, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-							GridBagConstraints.HORIZONTAL, insets, 0, 0));
+						GridBagConstraints.HORIZONTAL, insets, 0, 0));
 				PanelZ.add(zslider, new GridBagConstraints(3, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
-				
 
-				zslider.addAdjustmentListener(new IlastikZListener(this, zgenText, zgenstring, thirdDimensionsliderInit, thirdDimensionSize,
-						scrollbarSize, zslider));
-				
+				zslider.addAdjustmentListener(new IlastikZListener(this, zgenText, zgenstring, thirdDimensionsliderInit,
+						thirdDimensionSize, scrollbarSize, zslider));
+
 				PanelZ.setBorder(Zborder);
 				panelFirst.add(PanelZ, new GridBagConstraints(3, 1, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
-		
-			
-				
-			
+
 				PanelZ.setEnabled(true);
 				zslider.setEnabled(true);
-			
+
 				panelFirst.repaint();
 				panelFirst.validate();
 
 				zslider.repaint();
 				zslider.validate();
-				
 
 			}
 
 			if (ndims == 4) {
 
-				
-				
 				fourthDimension = 1;
 				thirdDimension = 1;
-				
+
 				PanelZ.remove(zslider);
 				PanelZ.remove(ztimeslider);
 				PanelZ.remove(timeslider);
-				
-				timeslider = new JScrollBar(Scrollbar.HORIZONTAL, fourthDimensionsliderInit, 10, 0,
-							scrollbarSize + 10);
-				ztimeslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0,
-							10 + scrollbarSize);
+
+				timeslider = new JScrollBar(Scrollbar.HORIZONTAL, fourthDimensionsliderInit, 10, 0, scrollbarSize + 10);
+				ztimeslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0, 10 + scrollbarSize);
 				thirdDimensionSize = (int) TotalView.dimension(2);
 				fourthDimensionSize = (int) TotalView.dimension(3);
-				
-				
-				
-				
-				
+
 				PanelZ.add(zText, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-							GridBagConstraints.HORIZONTAL, insets, 0, 0));
-				
+						GridBagConstraints.HORIZONTAL, insets, 0, 0));
+
 				PanelZ.add(ztimeslider, new GridBagConstraints(3, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
-				
+
 				PanelZ.add(timeText, new GridBagConstraints(3, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
 				PanelZ.add(timeslider, new GridBagConstraints(3, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
-				
+
 				PanelZ.setBorder(Zborder);
 				panelFirst.add(PanelZ, new GridBagConstraints(3, 1, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 						GridBagConstraints.HORIZONTAL, insets, 0, 0));
-				
-			
-				
-				timeslider.addAdjustmentListener(new IlastikTimeListener(this, timeText, timestring, fourthDimensionsliderInit,
-						fourthDimensionSize, scrollbarSize, timeslider));
-				ztimeslider.addAdjustmentListener(new IlastikZListener(this, zText, zstring, thirdDimensionsliderInit, thirdDimensionSize,
-						scrollbarSize, ztimeslider));
-				
-			
-				
+
+				timeslider.addAdjustmentListener(new IlastikTimeListener(this, timeText, timestring,
+						fourthDimensionsliderInit, fourthDimensionSize, scrollbarSize, timeslider));
+				ztimeslider.addAdjustmentListener(new IlastikZListener(this, zText, zstring, thirdDimensionsliderInit,
+						thirdDimensionSize, scrollbarSize, ztimeslider));
+
 				PanelZ.setEnabled(true);
 				zslider.setEnabled(true);
-			    timeslider.setEnabled(true);
+				timeslider.setEnabled(true);
 				panelFirst.repaint();
 				panelFirst.validate();
 
 				zslider.repaint();
 				zslider.validate();
-				
+
 				timeslider.repaint();
 				timeslider.validate();
-				
+
 			}
 
 			if (ndims > 4) {
@@ -275,9 +242,7 @@ public class InteractiveImporter implements PlugIn {
 				return;
 			}
 
-			
-			
-			CurrentView = utils.Slicer.getCurrentView(TotalView, thirdDimension, thirdDimensionSize, fourthDimension ,
+			CurrentView = utils.Slicer.getCurrentView(TotalView, thirdDimension, thirdDimensionSize, fourthDimension,
 					fourthDimensionSize);
 
 			if (imp == null) {
@@ -288,8 +253,6 @@ public class InteractiveImporter implements PlugIn {
 
 			else {
 
-				
-				
 				final float[] pixels = (float[]) imp.getProcessor().getPixels();
 				final Cursor<FloatType> c = Views.iterable(CurrentView).cursor();
 
@@ -300,17 +263,18 @@ public class InteractiveImporter implements PlugIn {
 
 			}
 
-			if(ndims < 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile);
-			if(ndims == 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile + " " +  "Z/T : " + thirdDimension);	
-			if(ndims > 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile + " " +  "Z : " + thirdDimension + " " +  "T : " + fourthDimension);	
+			if (ndims < 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile);
+			if (ndims == 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile + " " + "Z/T : " + thirdDimension);
+			if (ndims > 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile + " " + "Z : " + thirdDimension + " " + "T : "
+						+ fourthDimension);
 
 		}
 
 		if (change == ValueChange.FOURTHDIMmouse) {
-			
+
 			if (imp == null) {
 
 				imp = ImageJFunctions.show(CurrentView);
@@ -329,16 +293,17 @@ public class InteractiveImporter implements PlugIn {
 
 			}
 
-			if(ndims < 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile);
-			if(ndims == 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile + " " +  "Z/T : " + thirdDimension);	
-			if(ndims > 3)
-			imp.setTitle("Active image" + " " + "Index : " + rowfile + " " +  "Z : " + thirdDimension + " " +  "T : " + fourthDimension);	
+			if (ndims < 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile);
+			if (ndims == 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile + " " + "Z/T : " + thirdDimension);
+			if (ndims > 3)
+				imp.setTitle("Active image" + " " + "Index : " + rowfile + " " + "Z : " + thirdDimension + " " + "T : "
+						+ fourthDimension);
 			System.out.println(thirdDimension);
-			
+
 		}
-		
+
 		if (change == ValueChange.DISPLAYROI) {
 
 			roimanager = RoiManager.getInstance();
@@ -395,8 +360,7 @@ public class InteractiveImporter implements PlugIn {
 			new EmptyBorder(c.insets));
 	public Border Zborder = new CompoundBorder(new TitledBorder("Navigate for 3D/4D images"),
 			new EmptyBorder(c.insets));
-	public Border Tborder = new CompoundBorder(new TitledBorder("Navigate for 4D images"),
-			new EmptyBorder(c.insets));
+	public Border Tborder = new CompoundBorder(new TitledBorder("Navigate for 4D images"), new EmptyBorder(c.insets));
 	public int rowfile = 0;
 	public int rowroiset = 0;
 	final Label ChooseDirectory = new Label("Choose Save Directory for Labelled Images");
@@ -418,32 +382,24 @@ public class InteractiveImporter implements PlugIn {
 			scrollbarSize + 10);
 	public JScrollBar ztimeslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0,
 			scrollbarSize + 10);
-	
-	
-	
-	
+
 	public JScrollBar zslider = new JScrollBar(Scrollbar.HORIZONTAL, thirdDimensionsliderInit, 10, 0,
 			10 + scrollbarSize);
-	
-	
-	
-	
-	
+
 	public void Card() {
-		
+
 		inputfile = file[rowfile].getParentFile().getAbsolutePath();
-		
-		
+
 		LabelArea = new Label("Enter Class Label");
 
 		LabelTextField = new TextField();
 		LabelTextField = new TextField(5);
 		LabelTextField.setText(ClassLabel);
-		
+
 		DirectoryTextField = new TextField();
 		DirectoryTextField = new TextField(5);
 		DirectoryTextField.setText(inputfile);
-		
+
 		CardLayout cl = new CardLayout();
 
 		c.insets = new Insets(5, 5, 5, 5);
@@ -556,7 +512,7 @@ public class InteractiveImporter implements PlugIn {
 
 		PanelGen.add(LabelTextField, new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-		
+
 		PanelGen.add(ChooseDirectory, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
@@ -567,25 +523,21 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		PanelGen.add(CreateBlank, new GridBagConstraints(3, 4, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-	
-		
-		
+
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
 		PanelGen.setBorder(createset);
 
-		
 		panelFirst.add(PanelSelectFile, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		panelFirst.add(PanelSelectRoi, new GridBagConstraints(3, 0, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		panelFirst.add(PanelGen, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
-	
 
 		CreateBlank.addActionListener(new IlastikImageCreatorListener(this));
-	    LabelTextField.addTextListener(new IlastikLabelListener(this));
-	    DirectoryTextField.addTextListener(new IlastikDirectorySaveListener(this));
+		LabelTextField.addTextListener(new IlastikLabelListener(this));
+		DirectoryTextField.addTextListener(new IlastikDirectorySaveListener(this));
 		Resave.addActionListener(new ResaveSetListener(this));
 		Cardframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		cl.show(panelCont, "1");
@@ -597,7 +549,6 @@ public class InteractiveImporter implements PlugIn {
 		panelFirst.setVisible(true);
 		Cardframe.pack();
 		Cardframe.setVisible(true);
-	
 
 	}
 
@@ -605,8 +556,6 @@ public class InteractiveImporter implements PlugIn {
 
 		updatePreview(ValueChange.DISPLAYIMAGE);
 		inputfile = file[rowfile].getParentFile().getAbsolutePath();
-		
-		
 
 	}
 
