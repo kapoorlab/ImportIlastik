@@ -10,6 +10,8 @@ import java.util.Map;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import interactiveImporter.InteractiveImporter;
@@ -18,6 +20,7 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -134,6 +137,8 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 			Img<UnsignedShortType> BigCurrentEmpty = new ArrayImgFactory<UnsignedShortType>().create(parent.TotalView,
 					new UnsignedShortType());
+			
+			
           RandomAccessibleInterval<UnsignedShortType> pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
 			
 			
@@ -177,16 +182,14 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 				}
 			} 
-				
-			ImgSaver saver = new ImgSaver();
-			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
-			try {
-				saver.saveImg(imgName, BigCurrentEmpty);
-			} catch (Exception exc) {
-				exc.printStackTrace();
-			}
 			
-
+			String justName = parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel;
+			String imgName = parent.inputfile + "//" + justName + ".tif";
+			final ImagePlus ip = ImageJFunctions.wrap(BigCurrentEmpty, justName);
+		
+			IJ.save( ip.duplicate(), imgName );
+			
+		
 		
 		}
 

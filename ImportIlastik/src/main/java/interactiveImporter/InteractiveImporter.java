@@ -138,7 +138,6 @@ public class InteractiveImporter implements PlugIn {
 				e.printStackTrace();
 			}
 			ndims = TotalView.numDimensions();
-			ImageJFunctions.show(TotalView);
 
 			if (ndims < 3) {
 

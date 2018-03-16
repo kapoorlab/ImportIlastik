@@ -23,5 +23,14 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="/scifio"/>
+	<classpathentry kind="lib" path="/Users/aimachine/.m2/repository/net/imglib2/imglib2-algorithm/0.8.2/imglib2-algorithm-0.8.2.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="net.imglib2"/>
+			<attribute name="maven.artifactId" value="imglib2-algorithm"/>
+			<attribute name="maven.version" value="0.8.2"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
