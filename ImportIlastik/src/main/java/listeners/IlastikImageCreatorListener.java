@@ -120,7 +120,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 			} 
 				
 			ImgSaver saver = new ImgSaver();
-			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
+			String imgName = parent.savefile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
 			try {
 				saver.saveImg(imgName, BigCurrentEmpty);
 			} catch (Exception exc) {
@@ -184,7 +184,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 			} 
 			
 			String justName = parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel;
-			String imgName = parent.inputfile + "//" + justName + ".tif";
+			String imgName = parent.savefile + "//" + justName + ".tif";
 			final ImagePlus ip = ImageJFunctions.wrap(BigCurrentEmpty, justName);
 		
 			IJ.save( ip.duplicate(), imgName );
@@ -195,7 +195,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 		if(parent.TotalView.numDimensions() < 3) {
 			ImgSaver saver = new ImgSaver();
-			String imgName = parent.inputfile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
+			String imgName = parent.savefile + "//" + parent.file[parent.rowfile].getName().substring(0, parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
 			try {
 				saver.saveImg(imgName, CurrentEmpty);
 			} catch (Exception exc) {

@@ -22,8 +22,9 @@ public class  IlastikDirectorySaveListener implements TextListener {
 	    String s = tc.getText();
 	   
 	    if (s.length() > 0)
-	    	parent.inputfile = s;
+	    	parent.savefile = s;
 		
+	
 	}
 	
 	

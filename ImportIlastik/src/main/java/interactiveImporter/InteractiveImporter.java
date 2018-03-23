@@ -66,6 +66,7 @@ public class InteractiveImporter implements PlugIn {
 	public final File[] file;
 	public final File[] roifile;
 	public String inputfile;
+	public String savefile;
 	public ImagePlus imp;
 	public RoiManager roimanager;
 	public String ClassLabel;
@@ -389,6 +390,7 @@ public class InteractiveImporter implements PlugIn {
 
 		inputfile = file[rowfile].getParentFile().getAbsolutePath();
 
+		savefile = inputfile;
 		LabelArea = new Label("Enter Class Label");
 
 		LabelTextField = new TextField();
@@ -397,7 +399,7 @@ public class InteractiveImporter implements PlugIn {
 
 		DirectoryTextField = new TextField();
 		DirectoryTextField = new TextField(5);
-		DirectoryTextField.setText(inputfile);
+		DirectoryTextField.setText(savefile);
 
 		CardLayout cl = new CardLayout();
 
@@ -448,6 +450,9 @@ public class InteractiveImporter implements PlugIn {
 		scrollPaneroisets.setAutoscrolls(true);
 		scrollPaneroisets.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
+		Arrays.sort(file);
+		Arrays.sort(roifile);
+		
 		for (File currentfile : file) {
 
 			tablefile.getModel().setValueAt(currentfile.getName(), rowfile, 0);
