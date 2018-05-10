@@ -30,8 +30,7 @@ public class IlastikLoadImage implements ActionListener {
 		parent.chooserA.setCurrentDirectory(new java.io.File("."));
 		parent.chooserA.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		//
-		 FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files", "tif", "tiff","nd2", "...");
-		parent.chooserA.setFileFilter(filter);
+
 				
 		parent.chooserA.setAcceptAllFileFilterUsed(false);
 		
@@ -39,15 +38,9 @@ public class IlastikLoadImage implements ActionListener {
 		if (parent.chooserA.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			
 
-			parent.imagefiles = parent.chooserA.getSelectedFile().listFiles(new FilenameFilter() {
+			parent.imagefiles = parent.chooserA.getSelectedFile().listFiles();
 
-				@Override
-				public boolean accept(File pathname, String filename) {
-
-					return (filename.endsWith(".tif") || filename.endsWith(".tiff") || filename.endsWith(".jpg")
-							|| filename.endsWith(".jpg")|| filename.endsWith(".jpeg") || filename.endsWith(".nd2")      );
-				}
-			});
+			
 			System.out.println("getCurrentDirectory(): " + parent.chooserA.getCurrentDirectory());
 			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile());
 			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile().listFiles().length);
