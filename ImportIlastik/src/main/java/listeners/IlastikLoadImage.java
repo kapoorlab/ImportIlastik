@@ -34,21 +34,24 @@ public class IlastikLoadImage implements ActionListener {
 				
 		parent.chooserA.setAcceptAllFileFilterUsed(false);
 		
-		//
-		if (parent.chooserA.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+if (parent.chooserA.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			
 
-			parent.imagefiles = parent.chooserA.getSelectedFile().listFiles();
+			parent.imagefiles = parent.chooserA.getSelectedFile().listFiles(new FilenameFilter() {
 
-			
+				@Override
+				public boolean accept(File pathname, String filename) {
+
+					return (filename.endsWith(".tif") || filename.endsWith(".tiff") || filename.endsWith(".jpg")
+							|| filename.endsWith(".jpg")|| filename.endsWith(".jpeg") || filename.endsWith(".nd2")      );
+				}
+			});
 			System.out.println("getCurrentDirectory(): " + parent.chooserA.getCurrentDirectory());
 			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile());
 			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile().listFiles().length);
 		} else {
 			System.out.println("No Selection ");
 		}
-
-		
 
 		
 	}

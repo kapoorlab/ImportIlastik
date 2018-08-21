@@ -300,7 +300,6 @@ public class InteractiveImporter implements PlugIn {
 			if (ndims > 3)
 				imp.setTitle("Active image" + " " + "Index : " + rowfile + " " + "Z : " + thirdDimension + " " + "T : "
 						+ fourthDimension);
-			System.out.println(thirdDimension);
 
 		}
 
