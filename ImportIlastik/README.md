@@ -1,2 +1,0 @@
-# ImportIlastik
-Labelled Dataset Generator
