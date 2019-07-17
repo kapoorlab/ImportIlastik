@@ -54,7 +54,6 @@ public class IlastikRoiImporter implements ActionListener {
 			}
 			
 					);
-           System.out.println("getSelectedFile() : " + parent.chooserB.getSelectedFile().listFiles().length);
 			
 			
 			

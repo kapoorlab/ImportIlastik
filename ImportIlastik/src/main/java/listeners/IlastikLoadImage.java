@@ -48,7 +48,6 @@ if (parent.chooserA.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			});
 			System.out.println("getCurrentDirectory(): " + parent.chooserA.getCurrentDirectory());
 			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile());
-			System.out.println("getSelectedFile() : " + parent.chooserA.getSelectedFile().listFiles().length);
 		} else {
 			System.out.println("No Selection ");
 		}
