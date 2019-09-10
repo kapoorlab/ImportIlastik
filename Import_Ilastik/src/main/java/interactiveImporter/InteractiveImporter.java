@@ -49,15 +49,18 @@ import listeners.IlastikImageCreatorListener;
 import listeners.IlastikLabelListener;
 import listeners.IlastikTimeListener;
 import listeners.IlastikZListener;
+import listeners.PatchSizeListener;
 import listeners.ResaveSetListener;
 
 import mpicbg.imglib.image.ImagePlusAdapter;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Intervals;
 import net.imglib2.view.Views;
 import utils.StringImage;
 
@@ -244,7 +247,7 @@ public class InteractiveImporter implements PlugIn {
 
 			CurrentView = utils.Slicer.getCurrentView(TotalView, thirdDimension, thirdDimensionSize, fourthDimension,
 					fourthDimensionSize);
-
+			
 			if (imp == null) {
 
 				imp = ImageJFunctions.show(CurrentView);
@@ -367,10 +370,12 @@ public class InteractiveImporter implements PlugIn {
 
 	public int SizeX = 200;
 	public int SizeY = 200;
+	public int PatchSize = 50;
 	public JButton Resave = new JButton("Resave RoiSet");
 	public JButton CreateBlank = new JButton("Create Ilastik Label import image");
-	public TextField LabelTextField;
-	public Label LabelArea;
+	public JButton CreatePatches = new JButton("Create Patches");
+	public TextField LabelTextField, PatchTextField;
+	public Label LabelArea, PatchArea;
 	public Label timeText = new Label("Current T = " + 1, Label.CENTER);
 	public Label zText = new Label("Current Z = " + 1, Label.CENTER);
 	public Label zgenText = new Label("Current Z / T = " + 1, Label.CENTER);
@@ -396,6 +401,13 @@ public class InteractiveImporter implements PlugIn {
 		LabelTextField = new TextField(5);
 		LabelTextField.setText(ClassLabel);
 
+		
+		PatchArea = new Label("Enter Patch Size");
+
+		PatchTextField = new TextField();
+		PatchTextField = new TextField(5);
+		PatchTextField.setText(Integer.toString(PatchSize));
+		
 		DirectoryTextField = new TextField();
 		DirectoryTextField = new TextField(5);
 		DirectoryTextField.setText(savefile);
@@ -526,6 +538,12 @@ public class InteractiveImporter implements PlugIn {
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 		PanelGen.add(CreateBlank, new GridBagConstraints(3, 4, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+		
+		PanelGen.add(PatchArea, new GridBagConstraints(0, 5, 3, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
+
+		PanelGen.add(PatchTextField, new GridBagConstraints(3, 5, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
+				GridBagConstraints.HORIZONTAL, insets, 0, 0));
 
 		PanelSelectFile.setBorder(selectfile);
 		PanelSelectRoi.setBorder(selectroiset);
@@ -540,6 +558,7 @@ public class InteractiveImporter implements PlugIn {
 
 		CreateBlank.addActionListener(new IlastikImageCreatorListener(this));
 		LabelTextField.addTextListener(new IlastikLabelListener(this));
+		PatchTextField.addTextListener(new PatchSizeListener(this));
 		DirectoryTextField.addTextListener(new IlastikDirectorySaveListener(this));
 		Resave.addActionListener(new ResaveSetListener(this));
 		Cardframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

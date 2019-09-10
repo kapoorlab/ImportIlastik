@@ -4,11 +4,18 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -18,21 +25,35 @@ import importRoiSets.RoiSetImporter;
 import interactiveImporter.InteractiveImporter;
 import io.scif.img.ImgSaver;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
+import net.imglib2.KDTree;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.Point;
+import net.imglib2.algorithm.region.hypersphere.HyperSphere;
+import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.Type;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Intervals;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import utils.FlagNode;
+import utils.NNFlagsearchKDtree;
 import utils.StringImage;
+
 
 public class IlastikImageCreatorListener implements ActionListener {
 
@@ -97,17 +118,27 @@ public class IlastikImageCreatorListener implements ActionListener {
 			Img<IntType> BitBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
 
 			IntervalView<UnsignedShortType> slice = Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
-			IntervalView<IntType> Bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, parent.thirdDimension - 1);
+			IntervalView<IntType> bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, parent.thirdDimension - 1);
 
 			String uniqueID = Integer.toString(parent.rowfile);
 			String dimID = Integer.toString(parent.thirdDimension);
 
-			processSlice(CurrentEmpty, slice, Bitslice);
+			processSlice(CurrentEmpty, slice, bitslice);
 
 			StringImage str = new StringImage(dimID, slice);
 			parent.mydimID.add(str);
 			parent.HighDImageMap.put(uniqueID, parent.mydimID);
-
+			ImgSaver saver = new ImgSaver();
+			
+			
+			File patchDir = new File(parent.savefile + "//" + "Patches");
+			patchDir.mkdir();
+			
+			File maskDir = new File(parent.savefile + "//" + "Masks");
+			maskDir.mkdir();
+			
+			
+			
 			if (parent.HighDImageMap.size() > 0) {
 				for (Map.Entry<String, ArrayList<StringImage>> entry : parent.HighDImageMap.entrySet()) {
 
@@ -120,10 +151,38 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 							int thirdDim = Integer.parseInt(list.get(i).ID);
 							slice = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
-							Bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, thirdDim - 1);
+							bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, thirdDim - 1);
 
-							processSlice(list.get(i).image, slice, Bitslice);
+							processSlice(list.get(i).image, slice, bitslice);
 
+						}
+						
+						ArrayList<Point> CenterList = getCenterLabel(bitslice);
+						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice, patchDir, maskDir, 2);
+
+						int count = 0;
+						for (Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>> BaseMaskPair: ListBaseMaskPair) {
+							
+							RandomAccessibleInterval<FloatType> Base = BaseMaskPair.getA();
+							RandomAccessibleInterval<FloatType> Mask = BaseMaskPair.getB();
+							
+							
+							String imgName = patchDir + "//" + parent.file[parent.rowfile].getName().substring(0,
+									parent.file[parent.rowfile].getName().lastIndexOf(".")) + count + parent.ClassLabel + ".tif";
+							String intimgName = maskDir + "//"
+									+ parent.file[parent.rowfile].getName().substring(0,
+											parent.file[parent.rowfile].getName().lastIndexOf("."))
+									+ count + parent.ClassLabel + ".tif";
+							
+							
+							final ImagePlus ip = ImageJFunctions.wrap(Base, imgName+count);
+							final ImagePlus ipsec = ImageJFunctions.wrap(Mask, imgName+count);
+							IJ.save(ip.duplicate(), imgName+count);
+							IJ.save(ipsec.duplicate(), intimgName+count);
+							
+							
+							count++;
+							
 						}
 
 					}
@@ -131,10 +190,16 @@ public class IlastikImageCreatorListener implements ActionListener {
 				}
 			}
 			
-			ImgSaver saver = new ImgSaver();
-			String imgName = parent.savefile + "//" + parent.file[parent.rowfile].getName().substring(0,
+			
+		
+			
+			File labelDir = new File(parent.savefile + "//" + "Labels");
+			labelDir.mkdir();
+			
+			
+			String imgName = labelDir + "//" + parent.file[parent.rowfile].getName().substring(0,
 					parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
-			String intimgName = parent.savefile + "//"
+			String intimgName = labelDir + "//"
 					+ parent.file[parent.rowfile].getName().substring(0,
 							parent.file[parent.rowfile].getName().lastIndexOf("."))
 					+ "Integer" + parent.ClassLabel + ".tif";
@@ -170,7 +235,29 @@ public class IlastikImageCreatorListener implements ActionListener {
 			StringImage str = new StringImage(dimID, fourdimID, slice);
 			parent.mydimID.add(str);
 			parent.HighDImageMap.put(uniqueID, parent.mydimID);
+			File patchDir = new File(parent.savefile + "//" + "Patches");
+			patchDir.mkdir();
+			
+			File maskDir = new File(parent.savefile + "//" + "Masks");
+			maskDir.mkdir();
 
+			
+			File labelDir = new File(parent.savefile + "//" + "Labels");
+			labelDir.mkdir();
+			
+			
+			
+			
+			String justName = parent.file[parent.rowfile].getName().substring(0,
+					parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel;
+			String imgName = labelDir + "//" + justName + ".tif";
+			
+			
+			
+			String patchimgName = patchDir + "//" + justName + ".tif"; 
+			String maskimgName = maskDir + "//" + justName + ".tif";
+			
+			
 			if (parent.HighDImageMap.size() > 0) {
 				for (Map.Entry<String, ArrayList<StringImage>> entry : parent.HighDImageMap.entrySet()) {
 
@@ -186,24 +273,50 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 							pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
 							slice = Views.hyperSlice(pretotalimg, 2, fourthDim - 1);
+							bitslice = Views.hyperSlice(bitpretotalimg, 2, fourthDim - 1);
 
 							processSlice(list.get(i).image, slice, bitslice);
+							
 
 						}
+						
+						ArrayList<Point> CenterList = getCenterLabel(bitslice);
+						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice, patchDir, maskDir, 2);
 
+						int count = 0;
+						for (Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>> BaseMaskPair: ListBaseMaskPair) {
+							
+							RandomAccessibleInterval<FloatType> Base = BaseMaskPair.getA();
+							RandomAccessibleInterval<FloatType> Mask = BaseMaskPair.getB();
+							
+							final ImagePlus ip = ImageJFunctions.wrap(Base, justName+count);
+
+							IJ.save(ip.duplicate(), patchimgName+count);
+
+							final ImagePlus intip = ImageJFunctions.wrap(Mask, maskimgName+count);
+
+							IJ.save(intip.duplicate(), maskimgName+count);
+							
+							count++;
+							
+						}
+						
 					}
 
 				}
 			}
-
-			String justName = parent.file[parent.rowfile].getName().substring(0,
-					parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel;
-			String imgName = parent.savefile + "//" + justName + ".tif";
-			String intimgName = parent.savefile + "//"
+			
+	
+			
+			
+			
+			String intimgName = labelDir + "//"
 					+ parent.file[parent.rowfile].getName().substring(0,
 							parent.file[parent.rowfile].getName().lastIndexOf("."))
 					+ "Integer" + parent.ClassLabel + ".tif";
 
+			
+			
 			final ImagePlus ip = ImageJFunctions.wrap(BigCurrentEmpty, justName);
 
 			IJ.save(ip.duplicate(), imgName);
@@ -216,9 +329,17 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 		if (parent.TotalView.numDimensions() < 3) {
 			ImgSaver saver = new ImgSaver();
-			String imgName = parent.savefile + "//" + parent.file[parent.rowfile].getName().substring(0,
+			File patchDir = new File(parent.savefile + "//" + "Patches");
+			patchDir.mkdir();
+			
+			File maskDir = new File(parent.savefile + "//" + "Masks");
+			maskDir.mkdir();
+			
+			File labelDir = new File(parent.savefile + "//" + "Labels");
+			labelDir.mkdir();
+			String imgName = labelDir + "//" + parent.file[parent.rowfile].getName().substring(0,
 					parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
-			String intimgName = parent.savefile + "//"
+			String intimgName = labelDir + "//"
 					+ parent.file[parent.rowfile].getName().substring(0,
 							parent.file[parent.rowfile].getName().lastIndexOf("."))
 					+ "Integer" + parent.ClassLabel + ".tif";
@@ -274,6 +395,268 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 	}
 
+	
+	
+	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(ArrayList<Point> CenterList, IntervalView<IntType> bitimg, File patchDir, File maskDir, int radius) {
+		
+		
+		 
+		
+		
+		Cursor<IntType> intcursor = Views.iterable(bitimg).localizingCursor();
+		ArrayList<Point> ExcludeLocations = new ArrayList<Point>(); 
+		while(intcursor.hasNext()) {
+			
+			
+			intcursor.fwd();
+			if(intcursor.get().get() > 0) {
+		    Point point = new Point(new long[] {intcursor.getIntPosition(0), intcursor.getIntPosition(1)});
+			ExcludeLocations.add(point);
+			}
+		}
+		
+		RandomAccess<IntType> ranac = bitimg.randomAccess();
+		
+		
+		ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListPair = new ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>>();
+		
+		
+		
+			RandomAccessibleInterval<FloatType> view = parent.CurrentView;
+					//
+			RandomAccessibleInterval<FloatType> Base = new ArrayImgFactory<FloatType>().create(view, new FloatType());
+			RandomAccessibleInterval<FloatType> Mask = new ArrayImgFactory<FloatType>().create(view, new FloatType());
+			
+			RandomAccess<FloatType> Baseran = Base.randomAccess();
+			RandomAccess<FloatType> Maskran = Mask.randomAccess();
+		Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
+		
+		
+		
+		while(cursor.hasNext()) {
+		
+		cursor.fwd();
+		
+		ranac.setPosition(cursor);
+		
+		Baseran.setPosition(ranac);
+		Maskran.setPosition(ranac);
+		Baseran.get().set(cursor.get());
+		
+		long[] location = {Maskran.getIntPosition(0), Maskran.getIntPosition(1)};
+		Point Nearest = getNearestPoint(ExcludeLocations, new Point(location));
+		Point NearestCenter = getNearestPoint(CenterList, new Point(location));
+		
+		double distance = Intdistance(Nearest, new Point(location));
+		double centerdistance = Intdistance(NearestCenter, new Point(location));
+		double nearestcenterdistance = Intdistance(Nearest, NearestCenter);
+		
+		
+		if(distance <=1)
+			Maskran.get().set(cursor.get());
+		
+		//Inside point
+		if(distance > 1 && centerdistance < nearestcenterdistance) {
+		
+			long[] centrallocation = new long[ranac.numDimensions()];
+			NearestCenter.localize(centrallocation);
+			Baseran.setPosition(centrallocation);
+			Maskran.get().set(Baseran.get());
+			
+		}
+		
+		
+		//Outside point
+		if(distance > 1 && centerdistance > nearestcenterdistance) {
+			
+			Maskran.get().set(cursor.get());
+			
+		}
+		
+		
+		
+
+		
+		
+		
+		
+		
+		}
+		RandomAccessible< FloatType> infiniteBase =
+	            Views.extendValue( Base, new FloatType( 0 ) );
+		RandomAccessible< FloatType> infiniteMask =
+	            Views.extendValue( Mask, new FloatType( 0 ) );
+		
+	for (Point center: CenterList) {
+			
+			
+			
+			
+			int minX = Math.round(center.getFloatPosition(0)) - parent.PatchSize/ 2;
+			int maxX = Math.round(center.getFloatPosition(0)) + parent.PatchSize/ 2;
+			int minY = Math.round(center.getFloatPosition(1)) - parent.PatchSize/ 2;
+			int maxY = Math.round(center.getFloatPosition(1)) + parent.PatchSize/ 2;
+			
+			RandomAccessibleInterval<FloatType> BasePatch = Views.interval(infiniteBase, new long [] {minX , minY }, new long [] {maxX , maxY } );
+			RandomAccessibleInterval<FloatType> MaskPatch = Views.interval(infiniteMask, new long [] {minX , minY }, new long [] {maxX , maxY } );
+		ListPair.add(new ValuePair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(BasePatch, MaskPatch));
+		
+		
+	}
+		
+		
+		return ListPair;
+		
+		
+	}
+		
+		public double Intdistance(Point A, Point B) {
+			
+			double distance = 0;
+			for(int i = 0; i < A.numDimensions(); ++i) {
+				
+				distance+= (A.getDoublePosition(i) - B.getDoublePosition(i)) * (A.getDoublePosition(i) - B.getDoublePosition(i));
+				
+			}
+			
+			return Math.sqrt(distance);
+			
+		}
+		public static Point getNearestPoint(ArrayList<Point> Allrois, Point Clickedpoint) {
+
+			Point KDtreeroi = null;
+
+			final List<Point> targetCoords = new ArrayList<Point>(Allrois.size());
+			final List<FlagNode<Point>> targetNodes = new ArrayList<FlagNode<Point>>(Allrois.size());
+			for (int index = 0; index < Allrois.size(); ++index) {
+
+				Point r = Allrois.get(index);
+				 
+				 targetCoords.add( r );
+				 
+
+				targetNodes.add(new FlagNode<Point>(Allrois.get(index)));
+
+			}
+
+			if (targetNodes.size() > 0 && targetCoords.size() > 0) {
+
+				final KDTree<FlagNode<Point>> Tree = new KDTree<FlagNode<Point>>(targetNodes, targetCoords);
+
+				final NNFlagsearchKDtree<Point> Search = new NNFlagsearchKDtree<Point>(Tree);
+
+
+					final Point source = Clickedpoint;
+					final Point sourceCoords = new Point(source);
+					Search.search(sourceCoords);
+					final FlagNode<Point> targetNode = Search.getSampler().get();
+
+					KDtreeroi = targetNode.getValue();
+
+			}
+
+			return KDtreeroi;
+		}
+	public ArrayList<Point> getCenterLabel(final RandomAccessibleInterval<IntType> CurrentViewInt) {
+		
+		ArrayList<Point> CenterLabels = new ArrayList<Point>();
+		
+		Set<Integer> pixellist = GetPixelList(CurrentViewInt);
+		Iterator<Integer> setiter = pixellist.iterator();
+		
+		while(setiter.hasNext()) {
+			
+			
+			int label = setiter.next();
+			int meanX = 0;
+			int meanY = 0;
+			int count = 0;
+			if(label > 0) {
+				
+				Cursor<IntType> intcursor = Views.iterable(CurrentViewInt).localizingCursor();
+				
+				while(intcursor.hasNext()) {
+					
+					intcursor.fwd();
+					
+					
+					if(intcursor.get().get() == label) {
+						meanX+=intcursor.getIntPosition(0);
+						meanY+=intcursor.getIntPosition(1);
+						count++;
+					}
+					
+				}
+				
+								
+				
+			}
+			if(count > 0) {
+				meanX /=count;
+				meanY /=count;
+				long[] center = {meanX, meanY};
+				Point point = new Point(center);
+				CenterLabels.add(point);
+				}
+			
+			
+		}
+		
+		
+		
+		return CenterLabels;
+		
+	}
+	public  Set<Integer>  GetPixelList(RandomAccessibleInterval<IntType> intimg  ) {
+
+		IntType min = new IntType();
+		IntType max = new IntType();
+		computeMinMax(Views.iterable(intimg), min, max);
+		Cursor<IntType> intCursor = Views.iterable(intimg).cursor();
+		Set<Integer> pixellist = new HashSet<Integer>();
+		// Neglect the background class label
+		int currentLabel = max.get();
+		pixellist.clear();
+		
+		
+		while (intCursor.hasNext()) {
+			intCursor.fwd();
+			int i = intCursor.get().get();
+			if (i != currentLabel ) {
+
+				pixellist.add(i);
+
+				currentLabel = i;
+
+			}
+
+		}
+		
+		return pixellist;
+
+	}
+	public <T extends Comparable<T> & Type<T>> void computeMinMax(final Iterable<T> input, final T min, final T max) {
+		// create a cursor for the image (the order does not matter)
+		final Iterator<T> iterator = input.iterator();
+
+		// initialize min and max with the first image value
+		T type = iterator.next();
+
+		min.set(type);
+		max.set(type);
+
+		// loop over the rest of the data and determine min and max value
+		while (iterator.hasNext()) {
+			// we need this type more than once
+			type = iterator.next();
+
+			if (type.compareTo(min) < 0)
+				min.set(type);
+
+			if (type.compareTo(max) > 0)
+				max.set(type);
+		}
+	}
 	private void processSlice(final RandomAccessibleInterval<UnsignedShortType> in,
 			final IterableInterval<UnsignedShortType> out, RandomAccessibleInterval<IntType> intout) {
 
