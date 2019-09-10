@@ -451,23 +451,24 @@ public class IlastikImageCreatorListener implements ActionListener {
 		double centerdistance = Intdistance(NearestCenter, new Point(location));
 		double nearestcenterdistance = Intdistance(Nearest, NearestCenter);
 		
-		
+		//Near boundary point
 		if(distance <=1)
 			Maskran.get().set(cursor.get());
 		
 		//Inside point
-		if(distance > 1 && centerdistance < nearestcenterdistance) {
+		if(distance >1 && ranac.get().get() >= 1) {
 		
 			long[] centrallocation = new long[ranac.numDimensions()];
 			NearestCenter.localize(centrallocation);
 			Baseran.setPosition(centrallocation);
 			Maskran.get().set(Baseran.get());
+			Baseran.setPosition(ranac);
 			
 		}
 		
 		
 		//Outside point
-		if(distance > 1 && centerdistance > nearestcenterdistance) {
+		if(distance > 1 && ranac.get().get() == 0) {
 			
 			Maskran.get().set(cursor.get());
 			

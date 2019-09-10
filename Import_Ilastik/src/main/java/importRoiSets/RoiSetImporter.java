@@ -5,11 +5,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import ij.gui.Roi;
-
+import net.imagej.ImageJ;
 import ij.plugin.frame.RoiManager;
 
 import net.imglib2.RandomAccess;
 
+
+import net.imagej.ops.Op;
+import net.imagej.ops.Ops;
+import net.imagej.ops.Ops.Morphology;
+import net.imagej.ops.morphology.MorphologyNamespace;
 import net.imglib2.RandomAccessibleInterval;
 
 import net.imglib2.img.ImgFactory;
@@ -40,6 +45,7 @@ import net.imglib2.KDTree;
 
 import net.imglib2.RandomAccess;
 
+
 import net.imglib2.RandomAccessibleInterval;
 
 import net.imglib2.RealPoint;
@@ -47,9 +53,12 @@ import net.imglib2.RealPoint;
 import net.imglib2.RealPointSampleList;
 
 import net.imglib2.algorithm.labeling.AllConnectedComponents;
-
+import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.Watershed;
-
+import net.imglib2.algorithm.morphology.MorphologyUtils;
+import net.imglib2.algorithm.neighborhood.DiamondShape;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
+import net.imglib2.algorithm.neighborhood.Shape;
 import net.imglib2.algorithm.stats.Normalize;
 
 import net.imglib2.img.ImgFactory;
@@ -91,7 +100,7 @@ public class RoiSetImporter {
 	final RandomAccessibleInterval<FloatType> source;
 
 	public RoiManager roimanager;
-
+	static ImageJ ij = new ImageJ();
 	public RoiSetImporter(final RandomAccessibleInterval<FloatType> source) {
 
 		this.source = source;
@@ -158,8 +167,13 @@ public class RoiSetImporter {
 
 	static RandomAccessibleInterval<IntType> connectedcomponentImage;
 
+	
+	static RandomAccessibleInterval<BitType> prebitimg;
+	
+	
 	static RandomAccessibleInterval<BitType> bitimg;
-
+	
+	static RandomAccessibleInterval<FloatType> distimg;
 
 	public static <T extends NativeType<T>> RandomAccessibleInterval<IntType> LabelSlice(
 
@@ -167,17 +181,24 @@ public class RoiSetImporter {
 
 		final ImgFactory<FloatType> factory = Util.getArrayOrCellImgFactory(source, new FloatType());
 
-		bitimg = CreateBinaryImage(source, 0f ); 
-
+		prebitimg = CreateBinaryImage(source, 0f ); 
+		
+		
+		final ImgFactory<BitType> Bitfactory = Util.getArrayOrCellImgFactory(prebitimg, new BitType());
+		bitimg = Bitfactory.create(prebitimg);
+		
+		
+		ij.op().morphology().fillHoles(bitimg, prebitimg);
 		
 		// Prepare seed image
 
-		NativeImgLabeling<Integer, IntType> oldseedLabeling =  PrepareSeedImage(source);
+		NativeImgLabeling<Integer, IntType> oldseedLabeling =  PrepareSeedImage();
 
-		
+	
 
 		connectedcomponentImage = oldseedLabeling.getStorageImg();
 
+		
 		return connectedcomponentImage;
 
 	}
@@ -225,21 +246,19 @@ public class RoiSetImporter {
 
 
 
-	public static <T extends NativeType<T>> NativeImgLabeling<Integer, IntType> PrepareSeedImage(
-
-			RandomAccessibleInterval<T> inputimg) {
+	public static <T extends NativeType<T>> NativeImgLabeling<Integer, IntType> PrepareSeedImage() {
 
 		// New Labeling type
 
 		final ImgLabeling<Integer, IntType> seedLabeling = new ImgLabeling<Integer, IntType>(
 
-				new ArrayImgFactory<IntType>().create(inputimg, new IntType()));
+				new ArrayImgFactory<IntType>().create(bitimg, new IntType()));
 
 		// Old Labeling type
 
 		final NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
 
-				new ArrayImgFactory<IntType>().create(inputimg, new IntType()));
+				new ArrayImgFactory<IntType>().create(bitimg, new IntType()));
 
 		// The label generator for both new and old type
 
@@ -249,7 +268,7 @@ public class RoiSetImporter {
 
 		AllConnectedComponents.labelAllConnectedComponents(oldseedLabeling, bitimg, labelGenerator,
 
-				AllConnectedComponents.getStructuringElement(inputimg.numDimensions()));
+				AllConnectedComponents.getStructuringElement(bitimg.numDimensions()));
 
 		return oldseedLabeling;
 
