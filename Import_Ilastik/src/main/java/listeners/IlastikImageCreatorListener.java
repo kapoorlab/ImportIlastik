@@ -116,14 +116,18 @@ public class IlastikImageCreatorListener implements ActionListener {
 					new UnsignedShortType());
 
 			Img<IntType> BitBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
+			Img<IntType> BoundaryBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
+			
 
 			IntervalView<UnsignedShortType> slice = Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
 			IntervalView<IntType> bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, parent.thirdDimension - 1);
-
+			IntervalView<IntType> boundaryslice = Views.hyperSlice(BoundaryBigCurrentEmpty, 2, parent.thirdDimension - 1);
+			
+			
 			String uniqueID = Integer.toString(parent.rowfile);
 			String dimID = Integer.toString(parent.thirdDimension);
 
-			processSlice(CurrentEmpty, slice, bitslice);
+			processSlice(CurrentEmpty, slice, bitslice, boundaryslice);
 
 			StringImage str = new StringImage(dimID, slice);
 			parent.mydimID.add(str);
@@ -152,13 +156,14 @@ public class IlastikImageCreatorListener implements ActionListener {
 							int thirdDim = Integer.parseInt(list.get(i).ID);
 							slice = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
 							bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, thirdDim - 1);
+							boundaryslice = Views.hyperSlice(BoundaryBigCurrentEmpty, 2, thirdDim - 1);
 
-							processSlice(list.get(i).image, slice, bitslice);
+							processSlice(list.get(i).image, slice, bitslice,boundaryslice);
 
 						}
 						
-						ArrayList<Point> CenterList = getCenterLabel(bitslice);
-						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice, patchDir, maskDir, 2);
+						ArrayList<Point> CenterList = getCenterLabel(boundaryslice);
+						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice,boundaryslice, patchDir, maskDir, 2);
 
 						int count = 0;
 						for (Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>> BaseMaskPair: ListBaseMaskPair) {
@@ -217,20 +222,25 @@ public class IlastikImageCreatorListener implements ActionListener {
 			Img<UnsignedShortType> BigCurrentEmpty = new ArrayImgFactory<UnsignedShortType>().create(parent.TotalView,
 					new UnsignedShortType());
 			Img<IntType> BitBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
-
+			Img<IntType> BoundaryBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
 			RandomAccessibleInterval<UnsignedShortType> pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2,
 					parent.thirdDimension - 1);
 			RandomAccessibleInterval<IntType> bitpretotalimg = Views.hyperSlice(BitBigCurrentEmpty, 2,
 					parent.thirdDimension - 1);
-
+			
+			RandomAccessibleInterval<IntType> boundarypretotalimg = Views.hyperSlice(BoundaryBigCurrentEmpty, 2,
+					parent.thirdDimension - 1);
+			
 			IntervalView<UnsignedShortType> slice = Views.hyperSlice(pretotalimg, 2, parent.fourthDimension - 1);
 			IntervalView<IntType> bitslice = Views.hyperSlice(bitpretotalimg, 2, parent.fourthDimension - 1);
-
+			IntervalView<IntType> boundaryslice = Views.hyperSlice(boundarypretotalimg, 2, parent.fourthDimension - 1);
+			
+			
 			String uniqueID = Integer.toString(parent.rowfile);
 			String dimID = Integer.toString(parent.thirdDimension);
 			String fourdimID = Integer.toString(parent.fourthDimension);
 
-			processSlice(CurrentEmpty, slice, bitslice);
+			processSlice(CurrentEmpty, slice, bitslice, boundaryslice);
 
 			StringImage str = new StringImage(dimID, fourdimID, slice);
 			parent.mydimID.add(str);
@@ -274,14 +284,15 @@ public class IlastikImageCreatorListener implements ActionListener {
 							pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
 							slice = Views.hyperSlice(pretotalimg, 2, fourthDim - 1);
 							bitslice = Views.hyperSlice(bitpretotalimg, 2, fourthDim - 1);
+							boundaryslice = Views.hyperSlice(boundarypretotalimg, 2, fourthDim - 1);
 
-							processSlice(list.get(i).image, slice, bitslice);
+							processSlice(list.get(i).image, slice, bitslice, boundaryslice);
 							
 
 						}
 						
-						ArrayList<Point> CenterList = getCenterLabel(bitslice);
-						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice, patchDir, maskDir, 2);
+						ArrayList<Point> CenterList = getCenterLabel(boundaryslice);
+						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice,boundaryslice, patchDir, maskDir, 2);
 
 						int count = 0;
 						for (Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>> BaseMaskPair: ListBaseMaskPair) {
@@ -394,16 +405,17 @@ public class IlastikImageCreatorListener implements ActionListener {
 		parent.tableroisets.repaint();
 
 	}
-
+ 
 	
 	
-	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(ArrayList<Point> CenterList, IntervalView<IntType> bitimg, File patchDir, File maskDir, int radius) {
+	
+	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(ArrayList<Point> CenterList, IntervalView<IntType> bodyintimg,IntervalView<IntType> boundaryintimg, File patchDir, File maskDir, int radius) {
 		
 		
 		 
 		
 		
-		Cursor<IntType> intcursor = Views.iterable(bitimg).localizingCursor();
+		Cursor<IntType> intcursor = Views.iterable(boundaryintimg).localizingCursor();
 		ArrayList<Point> ExcludeLocations = new ArrayList<Point>(); 
 		while(intcursor.hasNext()) {
 			
@@ -414,8 +426,8 @@ public class IlastikImageCreatorListener implements ActionListener {
 			ExcludeLocations.add(point);
 			}
 		}
-		
-		RandomAccess<IntType> ranac = bitimg.randomAccess();
+		System.out.println(ExcludeLocations.size());
+		RandomAccess<IntType> ranac = boundaryintimg.randomAccess();
 		
 		
 		ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListPair = new ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>>();
@@ -659,7 +671,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 		}
 	}
 	private void processSlice(final RandomAccessibleInterval<UnsignedShortType> in,
-			final IterableInterval<UnsignedShortType> out, RandomAccessibleInterval<IntType> intout) {
+			final IterableInterval<UnsignedShortType> out, RandomAccessibleInterval<IntType> intbody, RandomAccessibleInterval<IntType> intboundary) {
 
 		final Cursor<UnsignedShortType> cursor = out.localizingCursor();
 		final RandomAccess<UnsignedShortType> ranac = in.randomAccess();
@@ -675,10 +687,13 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 		}
 
-		RandomAccessibleInterval<IntType> returnintout = RoiSetImporter.LabelSlice(bitout);
+		Pair<RandomAccessibleInterval<IntType>, RandomAccessibleInterval<IntType>> intandboundary = RoiSetImporter.LabelSlice(bitout);
 		
-		final Cursor<IntType> intcursor = Views.iterable(returnintout).localizingCursor();
-		final RandomAccess<IntType> intranac = intout.randomAccess();
+		
+		
+		
+		final Cursor<IntType> intcursor = Views.iterable(intandboundary.getA()).localizingCursor();
+		final RandomAccess<IntType> intranac = intbody.randomAccess();
 		
 		while(intcursor.hasNext()) {
 			
@@ -689,7 +704,17 @@ public class IlastikImageCreatorListener implements ActionListener {
 			
 		}
 		
+		final Cursor<IntType> boundaryintcursor = Views.iterable(intandboundary.getB()).localizingCursor();
+		final RandomAccess<IntType> boundaryintranac = intboundary.randomAccess();
 		
+		while(boundaryintcursor.hasNext()) {
+			
+			boundaryintcursor.fwd();
+			boundaryintranac.setPosition(boundaryintcursor);
+			boundaryintranac.get().set(boundaryintcursor.get());
+			
+			
+		}
 		
 
 	}
