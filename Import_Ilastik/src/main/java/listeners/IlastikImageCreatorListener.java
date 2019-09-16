@@ -162,7 +162,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 						}
 						
-						ArrayList<Point> CenterList = getCenterLabel(boundaryslice);
+						HashMap<Integer, Point> CenterList = getCenterLabel(boundaryslice);
 						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice,boundaryslice, patchDir, maskDir, 2);
 
 						int count = 0;
@@ -291,7 +291,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 						}
 						
-						ArrayList<Point> CenterList = getCenterLabel(boundaryslice);
+						HashMap<Integer, Point> CenterList = getCenterLabel(boundaryslice);
 						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice,boundaryslice, patchDir, maskDir, 2);
 
 						int count = 0;
@@ -409,7 +409,8 @@ public class IlastikImageCreatorListener implements ActionListener {
 	
 	
 	
-	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(ArrayList<Point> CenterList, IntervalView<IntType> bodyintimg,IntervalView<IntType> boundaryintimg, File patchDir, File maskDir, int radius) {
+	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(HashMap<Integer, Point> CenterList, 
+			IntervalView<IntType> bodyintimg, IntervalView<IntType> boundaryintimg, File patchDir, File maskDir, int radius) {
 		
 		
 		 
@@ -426,8 +427,8 @@ public class IlastikImageCreatorListener implements ActionListener {
 			ExcludeLocations.add(point);
 			}
 		}
-		System.out.println(ExcludeLocations.size());
 		RandomAccess<IntType> ranac = boundaryintimg.randomAccess();
+		RandomAccess<IntType> bodyranac = bodyintimg.randomAccess();
 		
 		
 		ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListPair = new ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>>();
@@ -441,7 +442,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 			
 			RandomAccess<FloatType> Baseran = Base.randomAccess();
 			RandomAccess<FloatType> Maskran = Mask.randomAccess();
-		Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
+		    Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
 		
 		
 		
@@ -450,61 +451,68 @@ public class IlastikImageCreatorListener implements ActionListener {
 		cursor.fwd();
 		
 		ranac.setPosition(cursor);
-		
+		bodyranac.setPosition(ranac);
 		Baseran.setPosition(ranac);
+		
+		
 		Maskran.setPosition(ranac);
+		
+		
 		Baseran.get().set(cursor.get());
 		
-		long[] location = {Maskran.getIntPosition(0), Maskran.getIntPosition(1)};
-		Point Nearest = getNearestPoint(ExcludeLocations, new Point(location));
-		Point NearestCenter = getNearestPoint(CenterList, new Point(location));
 		
-		double distance = Intdistance(Nearest, new Point(location));
-		double centerdistance = Intdistance(NearestCenter, new Point(location));
-		double nearestcenterdistance = Intdistance(Nearest, NearestCenter);
+	
 		
-		//Near boundary point
-		if(distance <=1)
-			Maskran.get().set(cursor.get());
 		
-		//Inside point
-		if(distance >1 && ranac.get().get() >= 1) {
-		
-			long[] centrallocation = new long[ranac.numDimensions()];
-			NearestCenter.localize(centrallocation);
-			Baseran.setPosition(centrallocation);
-			Maskran.get().set(Baseran.get());
-			Baseran.setPosition(ranac);
+	for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
 			
-		}
-		
-		
-		//Outside point
-		if(distance > 1 && ranac.get().get() == 0) {
+			Point center = entry.getValue();
+			Integer label = entry.getKey();
 			
-			Maskran.get().set(cursor.get());
-			
-		}
-		
-		
-		
+			//Inside point
+			if(bodyranac.get().get() == label &&  ranac.get().get() == 0 && bodyranac.get().get() !=0) {
+				
 
-		
-		
-		
-		
-		
+				Point NearestCenter =  CenterList.get(bodyranac.get().get());
+				
+				HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, NearestCenter, 2);
+				
+				HyperSphereCursor<FloatType> circlecursor = circle.localizingCursor();
+				
+				float meanIntensity = 0;
+				int count = 1;
+				while(circlecursor.hasNext()) {
+					
+					
+					circlecursor.fwd();
+					count++;
+					meanIntensity+=circlecursor.get().get();
+					
+					
+				}
+				meanIntensity/=count;
+				
+				Maskran.get().set(meanIntensity);
+				
+			}
+			//Boundary point and putside points
+			
+			else
+				
+				
+				Maskran.get().set(Baseran.get().get());
+				
+	}
 		}
+			
+
 		RandomAccessible< FloatType> infiniteBase =
 	            Views.extendValue( Base, new FloatType( 0 ) );
 		RandomAccessible< FloatType> infiniteMask =
 	            Views.extendValue( Mask, new FloatType( 0 ) );
+	for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
 		
-	for (Point center: CenterList) {
-			
-			
-			
-			
+		Point center = entry.getValue();
 			int minX = Math.round(center.getFloatPosition(0)) - parent.PatchSize/ 2;
 			int maxX = Math.round(center.getFloatPosition(0)) + parent.PatchSize/ 2;
 			int minY = Math.round(center.getFloatPosition(1)) - parent.PatchSize/ 2;
@@ -570,10 +578,9 @@ public class IlastikImageCreatorListener implements ActionListener {
 
 			return KDtreeroi;
 		}
-	public ArrayList<Point> getCenterLabel(final RandomAccessibleInterval<IntType> CurrentViewInt) {
+	public HashMap<Integer, Point> getCenterLabel(final RandomAccessibleInterval<IntType> CurrentViewInt) {
 		
-		ArrayList<Point> CenterLabels = new ArrayList<Point>();
-		
+		HashMap<Integer, Point> CenterMap = new HashMap<Integer, Point>();
 		Set<Integer> pixellist = GetPixelList(CurrentViewInt);
 		Iterator<Integer> setiter = pixellist.iterator();
 		
@@ -609,7 +616,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 				meanY /=count;
 				long[] center = {meanX, meanY};
 				Point point = new Point(center);
-				CenterLabels.add(point);
+				CenterMap.put(label, point);
 				}
 			
 			
@@ -617,7 +624,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 		
 		
 		
-		return CenterLabels;
+		return CenterMap;
 		
 	}
 	public  Set<Integer>  GetPixelList(RandomAccessibleInterval<IntType> intimg  ) {

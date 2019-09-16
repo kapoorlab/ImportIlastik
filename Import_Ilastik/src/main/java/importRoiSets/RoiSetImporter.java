@@ -233,13 +233,60 @@ public class RoiSetImporter {
 		boundaryconnectedcomponentImage = boundarylabeling.getIndexImg();
 		
 		boundaryconnectedcomponentImage = (RandomAccessibleInterval<IntType>) ij.op().morphology().erode(boundaryconnectedcomponentImage, shape);
-		
-
+		ImageJFunctions.show(connectedcomponentImage);
+		ImageJFunctions.show(boundaryconnectedcomponentImage);
 		return new ValuePair<RandomAccessibleInterval<IntType>,RandomAccessibleInterval<IntType>>(connectedcomponentImage, boundaryconnectedcomponentImage);
 
 	}
 	
+	private static RandomAccessibleInterval<IntType> IntegerBoundary(RandomAccessibleInterval<IntType> IntegerImage){
+		
 	
+			
+			
+			final IntType type = IntegerImage.randomAccess().get().createVariable();
+			RandomAccessibleInterval<IntType> gradientimg = new ArrayImgFactory<IntType>().create(IntegerImage,
+					new IntType());
+			Cursor<IntType> cursor = Views.iterable(gradientimg).localizingCursor();
+			RandomAccessible<IntType> view = Views.extendBorder(IntegerImage);
+			RandomAccess<IntType> randomAccess = view.randomAccess();
+
+			// iterate over all pixels
+			while (cursor.hasNext()) {
+				// move the cursor to the next pixel
+				cursor.fwd();
+
+				// compute gradient and its direction in each dimension
+				double gradient = 0;
+
+				for (int d = 0; d < IntegerImage.numDimensions(); ++d) {
+					// set the randomaccess to the location of the cursor
+					randomAccess.setPosition(cursor);
+
+					// move one pixel back in dimension d
+					randomAccess.bck(d);
+
+					// get the value
+					double Back = randomAccess.get().getRealDouble();
+
+					// move twice forward in dimension d, i.e.
+					// one pixel above the location of the cursor
+					randomAccess.fwd(d);
+					randomAccess.fwd(d);
+
+					// get the value
+					double Fwd = randomAccess.get().getRealDouble();
+
+					gradient += ((Fwd - Back) * (Fwd - Back)) / 4;
+
+				}
+
+				cursor.get().setReal(Math.sqrt(gradient));
+
+			}
+
+			return gradientimg;
+		}
 		
 		
 	
