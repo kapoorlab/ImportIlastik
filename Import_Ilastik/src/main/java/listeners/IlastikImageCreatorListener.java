@@ -12,7 +12,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import net.imagej.ops.OpService;
+import net.imagej.ImageJ;
+import net.imagej.ops.Op;
+import net.imagej.ops.Ops;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -58,10 +61,11 @@ import utils.StringImage;
 public class IlastikImageCreatorListener implements ActionListener {
 
 	final InteractiveImporter parent;
-
+	static ImageJ ij = new ImageJ();
 	public IlastikImageCreatorListener(final InteractiveImporter parent) {
 
 		this.parent = parent;
+		
 	}
 
 	@Override
@@ -110,29 +114,30 @@ public class IlastikImageCreatorListener implements ActionListener {
 			bitranac.get().setOne();
 		}
 
-		if (parent.TotalView.numDimensions() == 3) {
-
-			Img<UnsignedShortType> BigCurrentEmpty = new ArrayImgFactory<UnsignedShortType>().create(parent.TotalView,
-					new UnsignedShortType());
-
-			Img<IntType> BitBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
-			Img<IntType> BoundaryBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
+		
+		Img<UnsignedShortType> BigCurrentEmpty = ij.op().create().img(parent.TotalView, new UnsignedShortType());
+				
 			
 
-			IntervalView<UnsignedShortType> slice = Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
-			IntervalView<IntType> bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, parent.thirdDimension - 1);
-			IntervalView<IntType> boundaryslice = Views.hyperSlice(BoundaryBigCurrentEmpty, 2, parent.thirdDimension - 1);
+		Img<IntType> BitBigCurrentEmpty = ij.op().create().img(parent.TotalView, new IntType());
+		Img<IntType> BoundaryBigCurrentEmpty = ij.op().create().img(parent.TotalView, new IntType());
+		if (parent.TotalView.numDimensions() == 3) {
+
+		
+			
+
+			Img<UnsignedShortType> slice = (Img<UnsignedShortType>) Views.hyperSlice(BigCurrentEmpty, 2, parent.thirdDimension - 1);
+			Img<IntType> bitslice = (Img<IntType>) Views.hyperSlice(BitBigCurrentEmpty, 2, parent.thirdDimension - 1);
+			Img<IntType> boundaryslice = (Img<IntType>) Views.hyperSlice(BoundaryBigCurrentEmpty, 2, parent.thirdDimension - 1);
 			
 			
 			String uniqueID = Integer.toString(parent.rowfile);
 			String dimID = Integer.toString(parent.thirdDimension);
 
 			processSlice(CurrentEmpty, slice, bitslice, boundaryslice);
-
-			StringImage str = new StringImage(dimID, slice);
+			StringImage str = new StringImage(dimID,slice);
 			parent.mydimID.add(str);
 			parent.HighDImageMap.put(uniqueID, parent.mydimID);
-			ImgSaver saver = new ImgSaver();
 			
 			
 			File patchDir = new File(parent.savefile + "//" + "Patches");
@@ -154,9 +159,9 @@ public class IlastikImageCreatorListener implements ActionListener {
 						for (int i = 0; i < list.size(); ++i) {
 
 							int thirdDim = Integer.parseInt(list.get(i).ID);
-							slice = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
-							bitslice = Views.hyperSlice(BitBigCurrentEmpty, 2, thirdDim - 1);
-							boundaryslice = Views.hyperSlice(BoundaryBigCurrentEmpty, 2, thirdDim - 1);
+							slice = (Img<UnsignedShortType>) Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
+							bitslice = (Img<IntType>) Views.hyperSlice(BitBigCurrentEmpty, 2, thirdDim - 1);
+							boundaryslice = (Img<IntType>) Views.hyperSlice(BoundaryBigCurrentEmpty, 2, thirdDim - 1);
 
 							processSlice(list.get(i).image, slice, bitslice,boundaryslice);
 
@@ -208,21 +213,22 @@ public class IlastikImageCreatorListener implements ActionListener {
 					+ parent.file[parent.rowfile].getName().substring(0,
 							parent.file[parent.rowfile].getName().lastIndexOf("."))
 					+ "Integer" + parent.ClassLabel + ".tif";
-			try {
-				saver.saveImg(imgName, BigCurrentEmpty);
-				saver.saveImg(intimgName, BitBigCurrentEmpty);
-			} catch (Exception exc) {
-				exc.printStackTrace();
-			}
+			
+			final ImagePlus ip = ImageJFunctions.wrap(BigCurrentEmpty, imgName);
+
+			IJ.save(ip.duplicate(), imgName);
+
+			final ImagePlus intip = ImageJFunctions.wrap(BitBigCurrentEmpty, intimgName);
+
+			IJ.save(intip.duplicate(), intimgName);
+			
+			
 
 		}
 
 		if (parent.TotalView.numDimensions() == 4) {
 
-			Img<UnsignedShortType> BigCurrentEmpty = new ArrayImgFactory<UnsignedShortType>().create(parent.TotalView,
-					new UnsignedShortType());
-			Img<IntType> BitBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
-			Img<IntType> BoundaryBigCurrentEmpty = new ArrayImgFactory<IntType>().create(parent.TotalView, new IntType());
+		
 			RandomAccessibleInterval<UnsignedShortType> pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2,
 					parent.thirdDimension - 1);
 			RandomAccessibleInterval<IntType> bitpretotalimg = Views.hyperSlice(BitBigCurrentEmpty, 2,
@@ -231,9 +237,9 @@ public class IlastikImageCreatorListener implements ActionListener {
 			RandomAccessibleInterval<IntType> boundarypretotalimg = Views.hyperSlice(BoundaryBigCurrentEmpty, 2,
 					parent.thirdDimension - 1);
 			
-			IntervalView<UnsignedShortType> slice = Views.hyperSlice(pretotalimg, 2, parent.fourthDimension - 1);
-			IntervalView<IntType> bitslice = Views.hyperSlice(bitpretotalimg, 2, parent.fourthDimension - 1);
-			IntervalView<IntType> boundaryslice = Views.hyperSlice(boundarypretotalimg, 2, parent.fourthDimension - 1);
+			Img<UnsignedShortType> slice = (Img<UnsignedShortType>) Views.hyperSlice(pretotalimg, 2, parent.fourthDimension - 1);
+			Img<IntType> bitslice = (Img<IntType>) Views.hyperSlice(bitpretotalimg, 2, parent.fourthDimension - 1);
+			Img<IntType> boundaryslice = (Img<IntType>) Views.hyperSlice(boundarypretotalimg, 2, parent.fourthDimension - 1);
 			
 			
 			String uniqueID = Integer.toString(parent.rowfile);
@@ -282,9 +288,9 @@ public class IlastikImageCreatorListener implements ActionListener {
 							int fourthDim = Integer.parseInt(list.get(i).IDSec);
 
 							pretotalimg = Views.hyperSlice(BigCurrentEmpty, 2, thirdDim - 1);
-							slice = Views.hyperSlice(pretotalimg, 2, fourthDim - 1);
-							bitslice = Views.hyperSlice(bitpretotalimg, 2, fourthDim - 1);
-							boundaryslice = Views.hyperSlice(boundarypretotalimg, 2, fourthDim - 1);
+							slice = (Img<UnsignedShortType>) Views.hyperSlice(pretotalimg, 2, fourthDim - 1);
+							bitslice = (Img<IntType>) Views.hyperSlice(bitpretotalimg, 2, fourthDim - 1);
+							boundaryslice = (Img<IntType>) Views.hyperSlice(boundarypretotalimg, 2, fourthDim - 1);
 
 							processSlice(list.get(i).image, slice, bitslice, boundaryslice);
 							
@@ -339,28 +345,104 @@ public class IlastikImageCreatorListener implements ActionListener {
 		}
 
 		if (parent.TotalView.numDimensions() < 3) {
-			ImgSaver saver = new ImgSaver();
+			
+			
+
+			Img<UnsignedShortType> slice = BigCurrentEmpty;
+			Img<IntType> bitslice = BitBigCurrentEmpty;
+			Img<IntType> boundaryslice =  BoundaryBigCurrentEmpty;
+			
+			
+			String uniqueID = Integer.toString(parent.rowfile);
+			String dimID = Integer.toString(parent.thirdDimension);
+
+			processSlice(CurrentEmpty, slice, bitslice, boundaryslice);
+
+			StringImage str = new StringImage(dimID,  slice);
+			parent.mydimID.add(str);
+			parent.HighDImageMap.put(uniqueID, parent.mydimID);
+			
+			
 			File patchDir = new File(parent.savefile + "//" + "Patches");
 			patchDir.mkdir();
 			
 			File maskDir = new File(parent.savefile + "//" + "Masks");
 			maskDir.mkdir();
 			
+			
+			
+			if (parent.HighDImageMap.size() > 0) {
+				for (Map.Entry<String, ArrayList<StringImage>> entry : parent.HighDImageMap.entrySet()) {
+
+					String ID = entry.getKey();
+					if (ID.equals(uniqueID)) {
+
+						ArrayList<StringImage> list = parent.HighDImageMap.get(ID);
+
+						for (int i = 0; i < list.size(); ++i) {
+
+							slice = BigCurrentEmpty;
+							bitslice = BitBigCurrentEmpty;
+							boundaryslice =BoundaryBigCurrentEmpty;
+
+							processSlice(list.get(i).image, slice, bitslice,boundaryslice);
+
+						}
+						
+						HashMap<Integer, Point> CenterList = getCenterLabel(boundaryslice);
+						ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> ListBaseMaskPair = MakeandSavePatches(CenterList, bitslice,boundaryslice, patchDir, maskDir, 2);
+
+						int count = 0;
+						for (Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>> BaseMaskPair: ListBaseMaskPair) {
+							
+							RandomAccessibleInterval<FloatType> Base = BaseMaskPair.getA();
+							RandomAccessibleInterval<FloatType> Mask = BaseMaskPair.getB();
+							
+							
+							String imgName = patchDir + "//" + parent.file[parent.rowfile].getName().substring(0,
+									parent.file[parent.rowfile].getName().lastIndexOf(".")) + count + parent.ClassLabel + ".tif";
+							String intimgName = maskDir + "//"
+									+ parent.file[parent.rowfile].getName().substring(0,
+											parent.file[parent.rowfile].getName().lastIndexOf("."))
+									+ count + parent.ClassLabel + ".tif";
+							
+							
+							final ImagePlus ip = ImageJFunctions.wrap(Base, imgName+count);
+							final ImagePlus ipsec = ImageJFunctions.wrap(Mask, imgName+count);
+							IJ.save(ip.duplicate(), imgName+count);
+							IJ.save(ipsec.duplicate(), intimgName+count);
+							
+							
+							count++;
+							
+						}
+
+					}
+
+				}
+			}
+			
+			
+		
+			
 			File labelDir = new File(parent.savefile + "//" + "Labels");
 			labelDir.mkdir();
+			
+			
 			String imgName = labelDir + "//" + parent.file[parent.rowfile].getName().substring(0,
 					parent.file[parent.rowfile].getName().lastIndexOf(".")) + parent.ClassLabel + ".tif";
 			String intimgName = labelDir + "//"
 					+ parent.file[parent.rowfile].getName().substring(0,
 							parent.file[parent.rowfile].getName().lastIndexOf("."))
 					+ "Integer" + parent.ClassLabel + ".tif";
-			try {
-				saver.saveImg(imgName, CurrentEmpty);
-				saver.saveImg(intimgName, BitCurrentEmpty);
+			final ImagePlus ip = ImageJFunctions.wrap(BigCurrentEmpty, imgName);
 
-			} catch (Exception exc) {
-				exc.printStackTrace();
-			}
+			IJ.save(ip.duplicate(), imgName);
+
+			final ImagePlus intip = ImageJFunctions.wrap(BitBigCurrentEmpty, intimgName);
+
+			IJ.save(intip.duplicate(), intimgName);
+			
 		}
 
 		parent.tablefile.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -410,7 +492,7 @@ public class IlastikImageCreatorListener implements ActionListener {
 	
 	
 	public ArrayList<Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>> MakeandSavePatches(HashMap<Integer, Point> CenterList, 
-			IntervalView<IntType> bodyintimg, IntervalView<IntType> boundaryintimg, File patchDir, File maskDir, int radius) {
+			Img<IntType> bodyintimg, Img<IntType> boundaryintimg, File patchDir, File maskDir, int radius) {
 		
 		
 		 
@@ -470,12 +552,11 @@ public class IlastikImageCreatorListener implements ActionListener {
 			Integer label = entry.getKey();
 			
 			//Inside point
-			if(bodyranac.get().get() == label &&  ranac.get().get() == 0 && bodyranac.get().get() !=0) {
+			
+			if(bodyranac.get().get() == label && ranac.get().get()!=label  && bodyranac.get().get() !=0) {
 				
-
-				Point NearestCenter =  CenterList.get(bodyranac.get().get());
 				
-				HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, NearestCenter, 2);
+                 HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, center, 1);
 				
 				HyperSphereCursor<FloatType> circlecursor = circle.localizingCursor();
 				
@@ -493,14 +574,17 @@ public class IlastikImageCreatorListener implements ActionListener {
 				meanIntensity/=count;
 				
 				Maskran.get().set(meanIntensity);
+				System.out.println(meanIntensity);
 				
 			}
-			//Boundary point and putside points
 			
-			else
+			if(ranac.get().get() == label)
+				Maskran.get().set(cursor.get().get());
+			
+			//else
 				
-				
-				Maskran.get().set(Baseran.get().get());
+				//Maskran.get().set(cursor.get().get());
+			
 				
 	}
 		}

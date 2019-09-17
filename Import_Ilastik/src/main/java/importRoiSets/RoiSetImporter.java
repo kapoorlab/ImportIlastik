@@ -227,14 +227,13 @@ public class RoiSetImporter {
          };
          
          ConnectedComponents.labelAllConnectedComponents(bitimg, labeling, labels, StructuringElement.FOUR_CONNECTED);
-         ConnectedComponents.labelAllConnectedComponents((RandomAccessibleInterval<BitType>)invertprebitimg, boundarylabeling, labels, StructuringElement.FOUR_CONNECTED);
+         ConnectedComponents.labelAllConnectedComponents((RandomAccessibleInterval<BitType>)prebitimg, boundarylabeling, labels, StructuringElement.FOUR_CONNECTED);
          
 		connectedcomponentImage = labeling.getIndexImg();
 		boundaryconnectedcomponentImage = boundarylabeling.getIndexImg();
 		
 		boundaryconnectedcomponentImage = (RandomAccessibleInterval<IntType>) ij.op().morphology().erode(boundaryconnectedcomponentImage, shape);
-		ImageJFunctions.show(connectedcomponentImage);
-		ImageJFunctions.show(boundaryconnectedcomponentImage);
+		
 		return new ValuePair<RandomAccessibleInterval<IntType>,RandomAccessibleInterval<IntType>>(connectedcomponentImage, boundaryconnectedcomponentImage);
 
 	}

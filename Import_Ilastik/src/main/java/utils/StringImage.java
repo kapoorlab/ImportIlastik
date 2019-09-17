@@ -10,9 +10,9 @@ public class StringImage {
 	
 	public final String ID;
 	public final String IDSec;
-	public IntervalView<UnsignedShortType> image;
+	public Img<UnsignedShortType> image;
 	
-	public StringImage ( final String ID, final IntervalView<UnsignedShortType> image) {
+	public StringImage ( final String ID, final Img<UnsignedShortType> image) {
 		
 		this.ID = ID;
 		this.IDSec = null;
@@ -21,7 +21,7 @@ public class StringImage {
 		
 	}
 	
-public StringImage ( final String ID, final String IDSec, final IntervalView<UnsignedShortType> image) {
+public StringImage ( final String ID, final String IDSec, final Img<UnsignedShortType> image) {
 		
 		this.ID = ID;
 		this.IDSec = IDSec;
