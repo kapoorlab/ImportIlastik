@@ -519,15 +519,28 @@ public class IlastikImageCreatorListener implements ActionListener {
 		
 			RandomAccessibleInterval<FloatType> view = parent.CurrentView;
 					//
-			RandomAccessibleInterval<FloatType> Base = new ArrayImgFactory<FloatType>().create(view, new FloatType());
-			RandomAccessibleInterval<FloatType> Mask = new ArrayImgFactory<FloatType>().create(view, new FloatType());
+		
+		    for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
+				
+		    	
+		    	RandomAccessibleInterval<FloatType> Base = new ArrayImgFactory<FloatType>().create(view, new FloatType());
+				RandomAccessibleInterval<FloatType> Mask = new ArrayImgFactory<FloatType>().create(view, new FloatType());
+				
+				RandomAccess<FloatType> Baseran = Base.randomAccess();
+				RandomAccess<FloatType> Maskran = Mask.randomAccess();
+			   
+				RandomAccessible< FloatType> infiniteBase =
+			            Views.extendValue( Base, new FloatType( 0 ) );
+				RandomAccessible< FloatType> infiniteMask =
+			            Views.extendValue( Mask, new FloatType( 0 ) );
 			
-			RandomAccess<FloatType> Baseran = Base.randomAccess();
-			RandomAccess<FloatType> Maskran = Mask.randomAccess();
-		    Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
-		
-		
-		
+		    	
+				Point center = entry.getValue();
+				Integer label = entry.getKey();
+				
+				System.out.println(center.getDoublePosition(0) + " " + center.getDoublePosition(1) + " " + label);
+				
+				 Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
 		while(cursor.hasNext()) {
 		
 		cursor.fwd();
@@ -545,18 +558,16 @@ public class IlastikImageCreatorListener implements ActionListener {
 		
 	
 		
+			Maskran.get().set(cursor.get().get());
 		
-	for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
-			
-			Point center = entry.getValue();
-			Integer label = entry.getKey();
+	
 			
 			//Inside point
 			
-			if(bodyranac.get().get() == label && ranac.get().get()!=label  && bodyranac.get().get() !=0) {
+			if(bodyranac.get().get() == label ) {
 				
 				
-                 HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, center, 1);
+                HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, center, 1);
 				
 				HyperSphereCursor<FloatType> circlecursor = circle.localizingCursor();
 				
@@ -572,42 +583,41 @@ public class IlastikImageCreatorListener implements ActionListener {
 					
 				}
 				meanIntensity/=count;
-				
-				Maskran.get().set(meanIntensity);
-				System.out.println(meanIntensity);
+				FloatType min = new FloatType();
+				FloatType max = new FloatType();
+				computeMinMax(Views.iterable(Base), min, max);
+				Maskran.get().setZero();
+				float Intensity = (max.get() - min.get())/4;
+				Maskran.get().set(Intensity);
 				
 			}
 			
-			if(ranac.get().get() == label)
-				Maskran.get().set(cursor.get().get());
 			
-			//else
-				
-				//Maskran.get().set(cursor.get().get());
+			
+			
 			
 				
 	}
+		
+		int minX = Math.round(center.getFloatPosition(0)) - parent.PatchSize/ 2;
+		int maxX = Math.round(center.getFloatPosition(0)) + parent.PatchSize/ 2;
+		int minY = Math.round(center.getFloatPosition(1)) - parent.PatchSize/ 2;
+		int maxY = Math.round(center.getFloatPosition(1)) + parent.PatchSize/ 2;
+		
+		RandomAccessibleInterval<FloatType> BasePatch = Views.interval(infiniteBase, new long [] {minX , minY }, new long [] {maxX , maxY } );
+		RandomAccessibleInterval<FloatType> MaskPatch = Views.interval(infiniteMask, new long [] {minX , minY }, new long [] {maxX , maxY } );
+	ListPair.add(new ValuePair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(BasePatch, MaskPatch));
+	
+		
 		}
 			
 
-		RandomAccessible< FloatType> infiniteBase =
-	            Views.extendValue( Base, new FloatType( 0 ) );
-		RandomAccessible< FloatType> infiniteMask =
-	            Views.extendValue( Mask, new FloatType( 0 ) );
-	for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
-		
-		Point center = entry.getValue();
-			int minX = Math.round(center.getFloatPosition(0)) - parent.PatchSize/ 2;
-			int maxX = Math.round(center.getFloatPosition(0)) + parent.PatchSize/ 2;
-			int minY = Math.round(center.getFloatPosition(1)) - parent.PatchSize/ 2;
-			int maxY = Math.round(center.getFloatPosition(1)) + parent.PatchSize/ 2;
-			
-			RandomAccessibleInterval<FloatType> BasePatch = Views.interval(infiniteBase, new long [] {minX , minY }, new long [] {maxX , maxY } );
-			RandomAccessibleInterval<FloatType> MaskPatch = Views.interval(infiniteMask, new long [] {minX , minY }, new long [] {maxX , maxY } );
-		ListPair.add(new ValuePair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(BasePatch, MaskPatch));
+
+	
 		
 		
-	}
+		
+	
 		
 		
 		return ListPair;
