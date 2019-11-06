@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import net.imagej.ops.OpService;
 import net.imagej.ImageJ;
@@ -53,6 +54,8 @@ import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import poissonSimulator.NumberGeneratorImage;
+import poissonSimulator.PoissonGenerator;
 import utils.FlagNode;
 import utils.NNFlagsearchKDtree;
 import utils.StringImage;
@@ -583,14 +586,21 @@ public class IlastikImageCreatorListener implements ActionListener {
 					
 				}
 				meanIntensity/=count;
+				final  Random rnd = new Random( 464232194 );
 				FloatType min = new FloatType();
 				FloatType max = new FloatType();
 				computeMinMax(Views.iterable(Base), min, max);
 				Maskran.get().setZero();
 				float Intensity = (max.get() - min.get())/4;
-				Maskran.get().set(Intensity);
+				double SNR = Intensity;
+				final double mul = Math.pow( SNR / Math.sqrt( 5 ), 2 );
+				
+				final NumberGeneratorImage< FloatType> ng = new NumberGeneratorImage< FloatType>( Mask, mul );
+				final PoissonGenerator pg = new PoissonGenerator( ng, rnd );
+				Maskran.get().set(pg.nextValue().floatValue() );
 				
 			}
+			
 			
 			
 			
