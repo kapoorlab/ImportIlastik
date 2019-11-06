@@ -93,18 +93,48 @@
 		</repository>
 	</repositories>
 
+	
 	<dependencies>
 		<!-- ImgLib2 dependencies -->
-		
+			<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-vistools</artifactId>
+		</dependency>
+	
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigvolumeviewer</artifactId>
+			<version>0.1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-roi</artifactId>
+		</dependency>
 
 		<!-- ImageJ dependencies -->
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 		</dependency>
+<!-- https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-svggen -->
+<!-- https://mvnrepository.com/artifact/org.jfree/jfreesvg -->
+
 
 		<!-- Fiji dependencies -->
-		
+		<dependency>
+			<!-- NB: dependency:analyze erroneously flags this, but it's required -->
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Plugins</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
@@ -121,13 +151,13 @@
 			<artifactId>commons-io</artifactId>
 			<version>${commons-io.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>gov.nist.math</groupId>
-			<artifactId>jama</artifactId>
-		</dependency>
+
+		
+	
 	
 		
 		
 	</dependencies>
+
 </project>
 

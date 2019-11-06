@@ -39,6 +39,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Point;
 import net.imglib2.algorithm.region.hypersphere.HyperSphere;
 import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
+import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -521,6 +522,10 @@ public class IlastikImageCreatorListener implements ActionListener {
 		
 		
 			RandomAccessibleInterval<FloatType> view = parent.CurrentView;
+			
+			FloatType minval = new FloatType(0);
+			FloatType maxval = new FloatType(255);
+			Normalize.normalize(Views.iterable(view), minval, maxval);
 					//
 		
 		    for (Map.Entry<Integer, Point> entry: CenterList.entrySet())	{
@@ -542,72 +547,44 @@ public class IlastikImageCreatorListener implements ActionListener {
 				Integer label = entry.getKey();
 				
 				System.out.println(center.getDoublePosition(0) + " " + center.getDoublePosition(1) + " " + label);
+				final  Random rnd = new Random( 464232194 );
+				double SNR = 5;
 				
-				 Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
-		while(cursor.hasNext()) {
-		
-		cursor.fwd();
-		
-		ranac.setPosition(cursor);
-		bodyranac.setPosition(ranac);
-		Baseran.setPosition(ranac);
-		
-		
-		Maskran.setPosition(ranac);
-		
-		
-		Baseran.get().set(cursor.get());
-		
-		
-	
-		
-			Maskran.get().set(cursor.get().get());
-		
-	
-			
-			//Inside point
-			
-			if(bodyranac.get().get() == label ) {
+				final NumberGeneratorImage< FloatType> ng = new NumberGeneratorImage< FloatType>( view, 1.871267);
+				final PoissonGenerator pg = new PoissonGenerator( ng, rnd );
 				
+				Cursor<FloatType> cursor = Views.iterable(view).localizingCursor();
 				
-                HyperSphere<FloatType> circle =  new HyperSphere<FloatType>(Base, center, 1);
-				
-				HyperSphereCursor<FloatType> circlecursor = circle.localizingCursor();
-				
-				float meanIntensity = 0;
-				int count = 1;
-				while(circlecursor.hasNext()) {
+				while(cursor.hasNext()) {
+					cursor.fwd();
+					
+					ranac.setPosition(cursor);
+					bodyranac.setPosition(ranac);
+					Baseran.setPosition(ranac);
 					
 					
-					circlecursor.fwd();
-					count++;
-					meanIntensity+=circlecursor.get().get();
+					Maskran.setPosition(ranac);
+					
+					
+					Baseran.get().set(cursor.get());
+
+					if(bodyranac.get().get() == label ) {
+						ng.fwd();
+						Maskran.get().set(pg.nextValue().floatValue());
+						
+					}
+					else
+					Maskran.get().set(cursor.get().get());
+					
 					
 					
 				}
-				meanIntensity/=count;
-				final  Random rnd = new Random( 464232194 );
-				FloatType min = new FloatType();
-				FloatType max = new FloatType();
-				computeMinMax(Views.iterable(Base), min, max);
-				Maskran.get().setZero();
-				float Intensity = (max.get() - min.get())/4;
-				double SNR = Intensity;
-				final double mul = Math.pow( SNR / Math.sqrt( 5 ), 2 );
 				
-				final NumberGeneratorImage< FloatType> ng = new NumberGeneratorImage< FloatType>( Mask, mul );
-				final PoissonGenerator pg = new PoissonGenerator( ng, rnd );
-				Maskran.get().set(pg.nextValue().floatValue() );
+			
+			
+			
+		    
 				
-			}
-			
-			
-			
-			
-			
-			
-				
-	}
 		
 		int minX = Math.round(center.getFloatPosition(0)) - parent.PatchSize/ 2;
 		int maxX = Math.round(center.getFloatPosition(0)) + parent.PatchSize/ 2;
